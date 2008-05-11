@@ -1,0 +1,20 @@
+This project Haskell ports of the OCaml implementations of "Types and Programming Languages" (TAPL), by Benjamin C. Pierce.
+
+Other than the "common" subdirectory, each subdirectory maps the corresponding
+one found at http://www.cis.upenn.edu/~bcpierce/tapl/.  Each one has a Makefile,
+which documents the available targets.
+
+To test the entire project, enter the "common" subdirectory and execute "make all-test"
+
+To run interactively, you will need to augment the include path.  For example,
+from within the "arith" subdirectory, invoke ghci using:
+
+  ghci -i../common -i../common/HUnit-1.0
+
+These implementations have only been tested using ghc-6.8.1 on Ubuntu 7.10.
+
+TODO:
+* My make-fu is horrible.  In particular, "common" does make it's own libraries.  And I'm sure there are other ways this part of the project can be improved/fixd.
+
+* A version of HUnit is included, which make the project self-contained, but is the wrong long-term solution.
+

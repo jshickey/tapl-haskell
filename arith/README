@@ -1,0 +1,10 @@
+Haskell port of the arith OCaml implementation of TAPL.  
+
+Sample usage:
+
+> make test
+
+> make
+> ./f test.f
+
+See the Makefile for all targets.
