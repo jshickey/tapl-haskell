@@ -1,0 +1,13 @@
+Haskell port of the tyarith OCaml implementation of TAPL.  
+
+It reuses much of the arith implementation, and simply prints the 
+type at the end of the evaluation.
+
+Sample usage:
+
+> make test
+
+> make
+> ./f test.f
+
+See the Makefile for all targets.
