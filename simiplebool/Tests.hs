@@ -103,10 +103,11 @@ simpleBoolEvalTests
       ,("lambda + app", "true : Bool", "(lambda x:Bool->Bool. x) true;")
       ,("binder + lambda", "x : Bool\n(lambda x':Bool. x') : Bool -> Bool", 
                              "x : Bool; lambda x : Bool. x;")
+      ,("lambda of lamdba", "(lambda x:Bool -> Bool. x) : (Bool -> Bool) -> Bool -> Bool", "(lambda x : Bool->Bool. x);")
       ,("apply lambda", "(lambda y:Bool. y) : Bool -> Bool", 
-         "(lambda x : (Bool->Bool) -> Bool -> Bool. x) (lambda y:Bool. y);")
+         "(lambda x : Bool->Bool. x) (lambda y:Bool. y);")
       ,("multiple application", "false : Bool", 
-        "(lambda x : (((Bool->Bool) -> Bool) -> Bool). x) (lambda y:Bool. y) false;")
+        "(lambda x : Bool->Bool. x) (lambda y:Bool. y) false;")
       ];
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
