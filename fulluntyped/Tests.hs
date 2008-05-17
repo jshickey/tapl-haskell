@@ -133,8 +133,6 @@ getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                              , [testDotFTest]
                              ]
 
--- TODO arith and untyped parse tests
-
 main :: IO ()
 main = do allTests <- getAllTests
           runTests allTests
