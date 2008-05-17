@@ -9,12 +9,20 @@ import Evaluator
 import TaplError
 import Parser
 
-parseTests = [("true",  TmTrue,  "true;")
+parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
+             ,("true",  TmTrue,  "true;")
              ,("false", TmFalse, "false;")
              ,("0",     TmZero,  "0;")
+             ,("VarBind to type", TmBind "x" (VarBind TyBool), "x : Bool;")
              ]
 
-evalTests = [("true", "true : Bool", "true;")
+evalTests = [("true",  "true : Bool",  "true;")
+            ,("false", "false : Bool", "false;")
+            ,("0",     "0 : Nat",      "0;")
+            ,("varbind to type", "x : Bool\nx : Bool", "x : Bool; x;")
+            ,("multiple varbinds to type",
+              "x : Bool\nx : Bool\ny : Nat\nx : Bool\ny : Nat",
+              "x : Bool; x;y : Nat; x; y;")
             ]
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval

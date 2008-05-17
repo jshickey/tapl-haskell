@@ -37,8 +37,31 @@ symbol     = P.symbol     lexer
 whiteSpace = P.whiteSpace lexer
 float      = P.float      lexer
 semi       = P.semi       lexer
+
 {- ------------------------------
-   Parsing different types of terms
+   Parsing Binders
+   ------------------------------ -}
+
+parseBinder = do var <- identifier
+                 symbol ":"
+                 ty <- parseType
+                 let binding = VarBind ty
+                 updateState $ \ctx -> appendBinding var binding ctx
+                 return $ TmBind var binding
+
+{- ------------------------------
+   Parsing Types
+   ------------------------------ -}
+
+parseTypeBool = reserved "Bool" >> return TyBool
+
+parseTypeNat  = reserved "Nat"  >> return TyNat
+
+parseType = parseTypeBool <|>
+            parseTypeNat
+
+{- ------------------------------
+   Parsing zero-arg terms
    ------------------------------ -}
 
 parseTrue  = reserved "true"  >> return TmTrue
@@ -48,12 +71,27 @@ parseFalse = reserved "false" >> return TmFalse
 parseZero  = symbol "0"       >> return TmZero
 
 {- ------------------------------
+   Other Parsers
+   ------------------------------ -}
+
+indexOfForParser var ctx = case indexOf var ctx of
+                             Left err -> fail $ show err
+                             Right val -> return val
+
+parseVar = do var <- identifier
+              ctx <- getState
+              idx <- indexOfForParser var ctx
+              return $ TmVar idx (ctxLength ctx)
+
+{- ------------------------------
    Putting it all together
    ------------------------------ -}
 
 parseNonApp = parseTrue <|>
               parseFalse <|>
-              parseZero
+              parseZero <|>
+              (try parseBinder) <|>
+              parseVar 
 
 parseTerm = parseNonApp
 
