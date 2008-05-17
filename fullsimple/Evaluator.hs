@@ -2,8 +2,7 @@ module Evaluator where
 
 import Control.Monad
 
-import Context
-import FullSimple
+import Syntax
 import Parser
 import TaplError
 

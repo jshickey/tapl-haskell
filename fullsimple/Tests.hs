@@ -3,13 +3,15 @@ module Main where
 import Control.Monad
 import HUnit
 
-import FullSimple
+import Syntax
 import TestUtils
 import Evaluator
 import TaplError
 import Parser
 
-parseTests = [("true", TmTrue, "true;")
+parseTests = [("true",  TmTrue,  "true;")
+             ,("false", TmFalse, "false;")
+             ,("0",     TmZero,  "0;")
              ]
 
 evalTests = [("true", "true : Bool", "true;")
