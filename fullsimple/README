@@ -1,0 +1,11 @@
+Haskell port of the fullsimple OCaml implementation of TAPL, which is introduced in Chapter 9, and fully described in Chapter 11.
+
+SAMPLE USAGE:
+
+> make test
+
+> make
+> ./f test.f
+
+See the Makefile for all targets.
+
