@@ -9,12 +9,14 @@ import Control.Monad.Error
 data TaplError = ParserError String
                | EvalError String
                | TypeMismatch String
+               | UndefinedVariable String
                | Default String
                
 instance Show TaplError where
     show (ParserError msg) = "Parse Error: " ++ msg
     show (EvalError msg) = "Evaluation Error: " ++ msg
     show (TypeMismatch msg) = "Type Mismatch: " ++ msg
+    show (UndefinedVariable msg) = "Undefined variable: " ++ msg
     show (Default msg) = "Error: " ++ msg
 
 instance Error TaplError where

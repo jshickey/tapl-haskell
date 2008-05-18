@@ -34,6 +34,13 @@ data Term = TmTrue
           | TmBind String Binding
           deriving (Show, Eq)
 
+isval :: Term -> Bool
+isval TmTrue = True
+isval TmFalse = True
+isval TmZero = True
+isval (TmAbs _ _ _) = True
+isval _ = False
+
 {- --------------------------------
    TYPES
    -------------------------------- -}
@@ -49,6 +56,9 @@ data Ty = TyVar Int Int
         | TyNat
           deriving (Show, Eq)
 
+badApplication = TypeMismatch "Invalid argument passed to an abstraction"
+notAbstraction = TypeMismatch "First term of application must be an abstraction"
+
 typeof :: Term -> ContextThrowsError Ty
 typeof TmTrue = return TyBool
 typeof TmFalse = return TyBool
@@ -57,10 +67,21 @@ typeof (TmBind _ b) = liftThrows $ typeOfBinding b
 typeof (TmVar idx _) = do ctx <- get
                           b <- liftThrows $ bindingOf idx ctx
                           liftThrows $ typeOfBinding b
+typeof (TmAbs var ty body) = withBinding var (VarBind ty) $ 
+                             liftM (TyArr ty) $ typeof body 
+typeof (TmApp t1 t2) 
+    = do tyT1 <- typeof t1
+         tyT2 <- typeof t2
+         case tyT1 of
+           (TyArr tyArr1 tyArr2) | tyArr1 == tyT2 -> return tyArr2
+                                 | otherwise      -> throwError badApplication 
+           otherwise                              -> throwError notAbstraction
 
 showType :: Ty -> ContextThrowsError String
 showType TyBool = return "Bool"
 showType TyNat  = return "Nat"
+showType (TyArr ty1 ty2) 
+    = liftM2 (\x y -> x ++ " -> " ++ y) (showType ty1) (showType ty2)
 
 {- --------------------------------
    CONTEXT & BINDING
@@ -88,6 +109,12 @@ newContext = Ctx []
 ctxLength :: Context -> Int
 ctxLength (Ctx ps) = length ps
 
+pickFreshName :: String -> Context -> String
+pickFreshName var (Ctx ps) = iter var ps
+    where iter name [] = name
+          iter name ((n,_):rest) | n == name = iter (name ++ "'") ps
+                                 | otherwise = iter name rest
+
 indexOf :: String -> Context -> ThrowsError Int
 indexOf var (Ctx ps) = iter 0 ps
     where iter _ [] = throwError $ UndefinedVariable var
@@ -104,7 +131,9 @@ bindingPairOf :: Int -> Context -> ThrowsError (String, Binding)
 bindingPairOf idx (Ctx ps) 
     = if idx >= length ps
       then throwError $ UndefinedVariable $ "at index " ++ show idx
-      else return $ ps !! idx
+      else if idx < 0
+           then throwError $ Default "Negative index for context"
+           else return $ ps !! idx
 
 appendBinding :: String -> Binding -> Context -> Context
 appendBinding var binding (Ctx ps) = Ctx $ (var,binding) : ps
@@ -119,9 +148,17 @@ liftThrows (Right val) = return val
 runContextThrows :: ContextThrowsError a -> ThrowsError a
 runContextThrows action = evalState (runErrorT action) newContext
 
+-- helper function to perform an action with the 
+-- (temporary) addition of a binding
+withBinding var b action = do ctx <- get
+                              put $ appendBinding var b ctx
+                              result <- action
+                              put ctx
+                              return result
 {- --------------------------------
    PRINTING
    -------------------------------- -}
+
 
 showTerm :: Term -> ContextThrowsError String
 showTerm TmTrue = return "true"
@@ -136,6 +173,15 @@ showTerm (TmVar idx ctxLen)
          if ctxLength ctx == ctxLen
            then liftThrows $ nameOf idx ctx
            else throwError $ Default "Context length mismatch"
+showTerm (TmAbs var ty body)
+    = do ctx <- get
+         typeShown <- showType ty
+         let name = pickFreshName var ctx
+         bodyShown <- withBinding name (VarBind ty) $ showTerm body
+         return $ "(lambda " ++ name ++ ":" ++ typeShown ++ ". " ++ 
+                bodyShown ++ ")"
+showTerm (TmApp t1 t2) = liftM2 (\x y -> x ++ " " ++ y) 
+                         (showTerm t1) (showTerm t2)
 
 showTerms :: [Term] -> ThrowsError String
 showTerms ts = runContextThrows $ concatTerms $ mapM showTermAndType ts

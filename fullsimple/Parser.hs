@@ -42,12 +42,14 @@ semi       = P.semi       lexer
    Parsing Binders
    ------------------------------ -}
 
-parseBinder = do var <- identifier
-                 symbol ":"
-                 ty <- parseType
-                 let binding = VarBind ty
-                 updateState $ \ctx -> appendBinding var binding ctx
-                 return $ TmBind var binding
+parseVarBind = do var <- identifier
+                  symbol ":"
+                  ty <- parseType
+                  let binding = VarBind ty
+                  updateState $ \ctx -> appendBinding var binding ctx
+                  return $ TmBind var binding
+
+parseBinder = parseVarBind
 
 {- ------------------------------
    Parsing Types
@@ -83,6 +85,11 @@ parseVar = do var <- identifier
               idx <- indexOfForParser var ctx
               return $ TmVar idx (ctxLength ctx)
 
+parseAbs = do reserved "lambda"
+              (TmBind var (VarBind ty)) <- parseVarBind
+              symbol "."
+              liftM (TmAbs var ty) parseTerm
+
 {- ------------------------------
    Putting it all together
    ------------------------------ -}
@@ -90,10 +97,15 @@ parseVar = do var <- identifier
 parseNonApp = parseTrue <|>
               parseFalse <|>
               parseZero <|>
+              parseAbs <|>
               (try parseBinder) <|>
-              parseVar 
+              parseVar <|>
+              parens parseTerm
 
-parseTerm = parseNonApp
+-- For non-applications, we don't need to deal with associativity,
+-- but we need to special handling (in the form of 'chainl1' here)
+-- so that we enforce left-associativity as we aggregate a list of terms
+parseTerm = chainl1 parseNonApp $ return TmApp
 
 parseTerms = do whiteSpace -- lexer handles whitespace everywhere except here
                 ts <- endBy1 parseTerm semi
