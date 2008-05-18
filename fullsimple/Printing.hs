@@ -7,62 +7,81 @@ import TaplError
 import Control.Monad
 import Control.Monad.Error
 import Control.Monad.State
+import Control.Monad.Writer
 
 {- --------------------------------
    Printing Types
    -------------------------------- -}
 
-showType :: Ty -> ContextThrowsError String
-showType TyBool = return "Bool"
-showType TyNat  = return "Nat"
-showType (TyArr ty1 ty2) 
-    = liftM2 (\x y -> x ++ " -> " ++ y) (showType ty1) (showType ty2)
-
+showType :: Ty -> Printer ()
+showType TyBool          = tell "Bool"
+showType TyNat           = tell "Nat"
+showType (TyArr ty1 ty2) = showType ty1 >> tell " -> " >> showType ty2
 
 {- --------------------------------
-   Printing Terms
+   Printing a single Term
    -------------------------------- -}
 
-showTerm :: Term -> ContextThrowsError String
-showTerm TmTrue  = return "true"
-showTerm TmFalse = return "false"
-showTerm TmZero  = return "0"
-showTerm (TmSucc t) | isnumericval t = return $ show $ countSucc 1 t
-                    | otherwise      = liftM (\s -> "(succ "   ++ s ++ ")") $ 
-                                       showTerm t
-                    where countSucc c TmZero = c
+showTerm :: Term -> Printer ()
+showTerm TmTrue  = tell "true"
+showTerm TmFalse = tell "false"
+showTerm TmZero  = tell "0"
+showTerm (TmSucc t) | isnumericval t = tell $ show $ countSucc 1 t
+                    | otherwise      = showOneArg "succ" t
+                    where countSucc c TmZero     = c
                           countSucc c (TmSucc t) = countSucc (c + 1) t
-showTerm (TmPred t)   = liftM (\s -> "(pred "   ++ s ++ ")") $ showTerm t 
-showTerm (TmIsZero t) = liftM (\s -> "(iszero " ++ s ++ ")") $ showTerm t 
-showTerm (TmIf t1 t2 t3) = do t1Shown <- showTerm t1
-                              t2Shown <- showTerm t2
-                              t3Shown <- showTerm t3
-                              return $ "if " ++ t1Shown ++ " then " ++
-                                     t2Shown ++ " else " ++ t3Shown
-showTerm (TmBind var binding) 
-    = do ctx <- get
-         put $ appendBinding var binding ctx
-         return var
+showTerm (TmPred t)      = showOneArg "pred" t
+showTerm (TmIsZero t)    = showOneArg "iszero" t
+showTerm (TmIf t1 t2 t3) = tell "if "   >> showTerm t1 >>
+                           tell "then " >> showTerm t2 >>
+                           tell "else " >> showTerm t3
+showTerm (TmBind var binding) = modify (appendBinding var binding) >> tell var
 showTerm (TmVar idx ctxLen) 
     = do ctx <- get
          if ctxLength ctx == ctxLen
-           then liftThrows $ nameOf idx ctx
+           then do name <- liftThrowsToPrinter $ nameOf idx ctx
+                   tell name
            else throwError $ Default "Context length mismatch"
 showTerm (TmAbs var ty body)
     = do ctx <- get
-         typeShown <- showType ty
          let name = pickFreshName var ctx
-         bodyShown <- withBinding name (VarBind ty) $ showTerm body
-         return $ "(lambda " ++ name ++ ":" ++ typeShown ++ ". " ++ 
-                bodyShown ++ ")"
-showTerm (TmApp t1 t2) = liftM2 (\x y -> x ++ " " ++ y) 
-                         (showTerm t1) (showTerm t2)
+         tell $ "(lambda " ++ name ++ ":"
+         showType ty
+         tell ". "
+         withBinding name (VarBind ty) $ showTerm body
+         tell ")"
+showTerm (TmApp t1 t2) = showTerm t1 >> tell " " >> showTerm t2
+
+{- --------------------------------
+   Printing a list of Terms
+   -------------------------------- -}
 
 showTerms :: [Term] -> ThrowsError String
-showTerms ts = runContextThrows $ concatTerms $ mapM showTermAndType ts
-    where showTermAndType t = do termShown <- showTerm t
-                                 ty <- typeof t
-                                 typeShown <- showType ty
-                                 return $ termShown ++ " : " ++ typeShown
-          concatTerms = liftM $ concat . map ( ++ "\n")
+showTerms = runPrinter . mapM_ showLine 
+    where showLine t = showTerm t >> 
+                       tell " : " >> 
+                       (lift (typeof t) >>= showType) >> 
+                       tell "\n"
 
+{- --------------------------------
+   Helpers
+   -------------------------------- -}
+
+showOneArg :: String -> Term -> Printer ()
+showOneArg name t = tell "(" >> tell name >> tell " " >>
+                    showTerm t >>
+                    tell ")"
+
+-- Pile on another monad transformer to create a monad that 
+-- encapsulates:
+--    (1) accumulating a string
+--    (2) a Context (the state)
+--    (3) the possibility of errors (ThrowsError)
+
+type Printer = WriterT String ContextThrowsError
+
+runPrinter :: Printer () -> ThrowsError String
+runPrinter = runContextThrows . execWriterT 
+
+liftThrowsToPrinter :: ThrowsError a -> Printer a
+liftThrowsToPrinter = lift . liftThrows
