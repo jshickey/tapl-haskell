@@ -17,6 +17,7 @@ showType :: Ty -> Printer ()
 showType TyBool          = tell "Bool"
 showType TyNat           = tell "Nat"
 showType TyUnit          = tell "Unit"
+showType TyString        = tell "String"
 showType (TyArr ty1 ty2) = showType ty1 >> tell " -> " >> showType ty2
 
 {- --------------------------------
@@ -28,6 +29,7 @@ showTerm TmTrue  = tell "true"
 showTerm TmFalse = tell "false"
 showTerm TmZero  = tell "0"
 showTerm TmUnit  = tell "unit"
+showTerm (TmString str) = tell $ "\"" ++ str ++ "\""
 showTerm (TmSucc t) | isnumericval t = tell $ show $ countSucc 1 t
                     | otherwise      = showOneArg "succ" t
                     where countSucc c TmZero     = c

@@ -35,6 +35,7 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
              ,("pred", TmPred TmZero, "pred 0;")
              ,("iszero", TmIsZero TmZero, "iszero 0;")
              ,("unit", TmUnit, "unit;")
+             ,("string", TmString "foo", "\"foo\";")
              ]
 
 -- FORMAT: (test name, expected printed output, input)
@@ -67,6 +68,7 @@ evalTests = [("true",  "true : Bool",  "true;")
               "true : Bool",
               "(lambda x:Bool. (lambda y:Nat. x)) true 0;")
             ,("unit", "unit : Unit", "unit;")
+            ,("string", "\"foo\" : String", "\"foo\";")
             ]
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval

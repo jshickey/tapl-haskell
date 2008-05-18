@@ -34,15 +34,15 @@ fullSimpleDef = LanguageDef
 
 lexer = P.makeTokenParser fullSimpleDef
 
-parens     = P.parens     lexer
-braces     = P.braces     lexer
-identifier = P.identifier lexer
-reserved   = P.reserved   lexer
-symbol     = P.symbol     lexer
-whiteSpace = P.whiteSpace lexer
-float      = P.float      lexer
-semi       = P.semi       lexer
-
+parens        = P.parens        lexer
+braces        = P.braces        lexer
+identifier    = P.identifier    lexer
+reserved      = P.reserved      lexer
+symbol        = P.symbol        lexer
+whiteSpace    = P.whiteSpace    lexer
+float         = P.float         lexer
+semi          = P.semi          lexer
+stringLiteral = P.stringLiteral lexer
 {- ------------------------------
    Parsing Binders
    ------------------------------ -}
@@ -96,6 +96,8 @@ parseIsZero = parseOneArg "iszero" TmIsZero
    Other Parsers
    ------------------------------ -}
 
+parseString = liftM TmString stringLiteral 
+
 parseIf = do reserved "if"
              t1 <- parseTerm
              reserved "then"
@@ -132,6 +134,7 @@ parseNonApp = parseTrue <|>
               (try parseBinder) <|>
               parseVar <|>
               parseUnit <|>
+              parseString <|>
               parens parseTerm
 
 -- For non-applications, we don't need to deal with associativity,
