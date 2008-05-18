@@ -4,7 +4,7 @@
 #                (this is "make test" in the ocaml implementation)
 #   make clean   to remove all intermediate and temporary files
 
-FILES = Syntax.hs Parser.hs Evaluator.hs ../common/TaplError.hs ../common/Util.hs ../common/TestUtils.hs
+FILES = Syntax.hs Parser.hs Evaluator.hs ../common/TaplError.hs ../common/Util.hs ../common/TestUtils.hs ../common/ArithTests.hs
 
 INCLUDE = -i../common -i../common/HUnit-1.0
 

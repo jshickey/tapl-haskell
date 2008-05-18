@@ -5,25 +5,7 @@ import HUnit
 import TaplError
 import Typing
 import TestUtils
-
-tyarithEvalTests
-    = [("true", "true : Bool", "true;"),
-       ("false", "false : Bool", "false;"),
-       ("zero", "0 : Nat", "0;"),
-       ("E-IfTrue", "0 : Nat", "if true then 0 else false;"),
-       ("E-IfFalse", "false : Bool", "if false then 0 else false;"),
-       ("E-If", "0 : Nat", "if if false then false else true then 0 else false;"),
-       ("succ", "1 : Nat", "succ 0;"),
-       ("E-Succ", "1 : Nat", "succ if true then 0 else false;"),
-       ("E-PredSucc", "0 : Nat", "pred (succ 0);"),
-       ("E-PredZero", "0 : Nat", "pred 0;"),
-       ("E-Pred", "0 : Nat", "pred (pred 0);"),
-       ("test.f #4", "1 : Nat", "succ (pred 0);"),
-       ("test.f #5", "false : Bool", "iszero (pred (succ (succ 0)));"),
-       ("E-IsZeroZero", "true : Bool", "iszero 0;"),
-       ("E-IsZeroSucc", "false : Bool", "iszero (succ 0);"),
-       ("E-IsZero", "true : Bool", "iszero (pred (succ 0));")
-      ]
+import ArithTests
 
 tyarithTypeErrorTests
     = [("predMismatch", show predMismatch, "if 0 then true else false;")

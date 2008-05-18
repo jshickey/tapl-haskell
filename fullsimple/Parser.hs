@@ -73,8 +73,28 @@ parseFalse = reserved "false" >> return TmFalse
 parseZero  = symbol "0"       >> return TmZero
 
 {- ------------------------------
+   Arith Parsers
+   ------------------------------ -}
+
+parseOneArg keyword constructor = reserved keyword >> 
+                                  liftM constructor parseTerm
+
+parseSucc   = parseOneArg "succ"   TmSucc
+
+parsePred   = parseOneArg "pred"   TmPred
+
+parseIsZero = parseOneArg "iszero" TmIsZero
+
+{- ------------------------------
    Other Parsers
    ------------------------------ -}
+
+parseIf = do reserved "if"
+             t1 <- parseTerm
+             reserved "then"
+             t2 <- parseTerm
+             reserved "else"
+             liftM (TmIf t1 t2) parseTerm
 
 indexOfForParser var ctx = case indexOf var ctx of
                              Left err -> fail $ show err
@@ -97,6 +117,10 @@ parseAbs = do reserved "lambda"
 parseNonApp = parseTrue <|>
               parseFalse <|>
               parseZero <|>
+              parseSucc <|>
+              parsePred <|>
+              parseIsZero <|>
+              parseIf <|>
               parseAbs <|>
               (try parseBinder) <|>
               parseVar <|>

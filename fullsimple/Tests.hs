@@ -3,6 +3,7 @@ module Main where
 import Control.Monad
 import HUnit
 
+import ArithTests
 import Syntax
 import TestUtils
 import Evaluator
@@ -26,6 +27,13 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
                "(lambda x:Bool. x) true;")
              ,("app left-assoc", TmApp (TmApp TmTrue TmZero) TmFalse,
                "true 0 false;")
+             ,("if", TmIf TmTrue TmZero TmFalse, 
+               "if true then 0 else false;")
+             ,("if + parens", TmIf TmTrue TmZero TmFalse, 
+               "(if true then 0 else false);")
+             ,("succ", TmSucc TmZero, "succ 0;")
+             ,("pred", TmPred TmZero, "pred 0;")
+             ,("iszero", TmIsZero TmZero, "iszero 0;")
              ]
 
 -- FORMAT: (test name, expected printed output, input)
@@ -63,6 +71,7 @@ getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                  return $ TestList $ concat
                         [ map (makeParseTest parseFullSimple) parseTests
                         , map (makeEvalTest  parseAndEval)    evalTests
+                        , map (makeEvalTest  parseAndEval)    tyarithEvalTests
 -- TODO                        , [testDotFTest]
                         ]
                          

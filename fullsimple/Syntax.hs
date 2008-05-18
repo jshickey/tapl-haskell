@@ -28,18 +28,28 @@ data Term = TmTrue
           | TmTimesfloat Term Term
           | TmZero
           | TmSucc Term
-          | TmPred
+          | TmPred Term
           | TmIsZero Term
           | TmInert Ty
           | TmBind String Binding
           deriving (Show, Eq)
 
+isnumericval :: Term -> Bool
+isnumericval TmZero     = True
+isnumericval (TmSucc t) = isnumericval t
+isnumericval _          = False
+
 isval :: Term -> Bool
-isval TmTrue = True
-isval TmFalse = True
-isval TmZero = True
-isval (TmAbs _ _ _) = True
-isval _ = False
+isval TmTrue             = True
+isval TmFalse            = True
+isval TmUnit             = True
+isval (TmFloat _)        = True
+isval (TmString _)       = True
+isval (TmAbs _ _ _)      = True
+isval (TmTag _ t1 _)     = isval t1
+isval (TmRecord fs)      = and $ map (\(_,t) -> isval t) fs
+isval t | isnumericval t = True
+        | otherwise      = False
 
 {- --------------------------------
    TYPES
@@ -58,11 +68,32 @@ data Ty = TyVar Int Int
 
 badApplication = TypeMismatch "Invalid argument passed to an abstraction"
 notAbstraction = TypeMismatch "First term of application must be an abstraction"
+expectedBool = TypeMismatch "The conditional of an if-statement must be a Bool"
+ifMismatch = TypeMismatch "Predicate and alternative of an if-statement must be of the same type"
+
+checkType :: Term -> Ty -> Ty -> ContextThrowsError Ty
+checkType t expected output
+    = do tyT <- typeof t
+         if tyT == expected
+           then return output
+           else throwError $ TypeMismatch $ "Expected " ++ show expected ++
+                ", but saw " ++ show tyT
 
 typeof :: Term -> ContextThrowsError Ty
-typeof TmTrue = return TyBool
+typeof TmTrue  = return TyBool
 typeof TmFalse = return TyBool
-typeof TmZero = return TyNat
+typeof TmZero  = return TyNat
+typeof (TmSucc t)   = checkType t TyNat TyNat
+typeof (TmPred t)   = checkType t TyNat TyNat
+typeof (TmIsZero t) = checkType t TyNat TyBool
+typeof (TmIf p c a) = do tyP <- typeof p
+                         if tyP /= TyBool
+                           then throwError expectedBool
+                           else do tyC <- typeof c
+                                   tyA <- typeof a
+                                   if tyC == tyA
+                                     then return tyC
+                                     else throwError ifMismatch
 typeof (TmBind _ b) = liftThrows $ typeOfBinding b
 typeof (TmVar idx _) = do ctx <- get
                           b <- liftThrows $ bindingOf idx ctx
@@ -161,9 +192,21 @@ withBinding var b action = do ctx <- get
 
 
 showTerm :: Term -> ContextThrowsError String
-showTerm TmTrue = return "true"
+showTerm TmTrue  = return "true"
 showTerm TmFalse = return "false"
-showTerm TmZero = return "0"
+showTerm TmZero  = return "0"
+showTerm (TmSucc t) | isnumericval t = return $ show $ countSucc 1 t
+                    | otherwise      = liftM (\s -> "(succ "   ++ s ++ ")") $ 
+                                       showTerm t
+                    where countSucc c TmZero = c
+                          countSucc c (TmSucc t) = countSucc (c + 1) t
+showTerm (TmPred t)   = liftM (\s -> "(pred "   ++ s ++ ")") $ showTerm t 
+showTerm (TmIsZero t) = liftM (\s -> "(iszero " ++ s ++ ")") $ showTerm t 
+showTerm (TmIf t1 t2 t3) = do t1Shown <- showTerm t1
+                              t2Shown <- showTerm t2
+                              t3Shown <- showTerm t3
+                              return $ "if " ++ t1Shown ++ " then " ++
+                                     t2Shown ++ " else " ++ t3Shown
 showTerm (TmBind var binding) 
     = do ctx <- get
          put $ appendBinding var binding ctx
