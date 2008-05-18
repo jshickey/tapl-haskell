@@ -77,6 +77,8 @@ parseFalse = reserved "false" >> return TmFalse
 
 parseZero  = symbol "0"       >> return TmZero
 
+parseUnit  = reserved "unit"  >> return TmUnit
+
 {- ------------------------------
    Arith Parsers
    ------------------------------ -}
@@ -129,6 +131,7 @@ parseNonApp = parseTrue <|>
               parseAbs <|>
               (try parseBinder) <|>
               parseVar <|>
+              parseUnit <|>
               parens parseTerm
 
 -- For non-applications, we don't need to deal with associativity,

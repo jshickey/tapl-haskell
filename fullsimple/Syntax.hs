@@ -61,6 +61,7 @@ isval t | isnumericval t = True
 
 data Ty = TyVar Int Int
         | TyId String
+        | TyUnit
         | TyArr Ty Ty -- "t1 -> t2"
         | TyRecord [(String, Ty)]
         | TyVariant [(String, Ty)]

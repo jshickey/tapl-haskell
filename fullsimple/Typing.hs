@@ -30,6 +30,7 @@ typeof :: Term -> ContextThrowsError Ty
 typeof TmTrue  = return TyBool
 typeof TmFalse = return TyBool
 typeof TmZero  = return TyNat
+typeof TmUnit  = return TyUnit
 typeof (TmSucc t)   = checkType t TyNat TyNat
 typeof (TmPred t)   = checkType t TyNat TyNat
 typeof (TmIsZero t) = checkType t TyNat TyBool
