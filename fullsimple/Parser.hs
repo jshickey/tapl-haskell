@@ -1,3 +1,7 @@
+{- Parsec parser for fullsimple.  The sole expected method, parseFullSimple,
+   takes a string as input, and returns a list of terms, where each term
+   was separated by a semicolon in the input.
+ -}
 module Parser ( parseFullSimple ) where
 
 import Text.ParserCombinators.Parsec
@@ -8,6 +12,7 @@ import Control.Monad.Error
 
 import Syntax
 import TaplError
+import Context
 
 {- ------------------------------
    Lexer, making use of the Parsec.Token and Language

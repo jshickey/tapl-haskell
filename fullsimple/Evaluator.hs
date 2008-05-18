@@ -1,3 +1,5 @@
+{- Small-step evaluator for fullsimple 
+ -}
 module Evaluator ( parseAndEval ) where
 
 import Control.Monad
@@ -5,8 +7,15 @@ import Control.Monad.State
 import Control.Monad.Error
 
 import Syntax
+import Context
+import Typing
 import Parser
 import TaplError
+import Printing
+
+{- ---------------------------------
+ sub/shift
+ --------------------------------- -}
 
 sub i val t = walk 0 t subVar
     where subVar c v@(TmVar idx _) | c + i == idx = shift c val
@@ -17,16 +26,28 @@ shift i t = walk 0 t shiftVar
               | idx >= c  = TmVar (idx + i) (ctxLen + i)
               | otherwise = TmVar idx (ctxLen + i)
 
+-- helper function abstracting the common functionality of sub/shift
 walk c t f = case t of
                TmVar _ _ -> f c t
                TmAbs var ty body -> TmAbs var ty $ walk (c + 1) body f
                TmApp t1 t2 -> TmApp (walk c t1 f) (walk c t2 f)
                otherwise -> t
 
+{- ---------------------------------
+ eval1 helper functions
+ --------------------------------- -}
+
 eval1Cons :: (Term -> Term) -> Term -> ContextThrowsError (Maybe Term)
 eval1Cons constructor = (liftM (liftM constructor)) . eval1
 
 apply term body = shift (-1) $ sub 0 (shift 1 term) body
+
+{- ---------------------------------
+ eval1, which executes a single "small step".  Use the Monad Transformer
+ ContextThrowsError to implicitly pass around the context during the 
+ evaluation.  Return a "Maybe Term", with "Nothing" indicating that
+ the input term could not be further reduced.
+ --------------------------------- -}
 
 eval1 :: Term -> ContextThrowsError (Maybe Term)
 eval1 (TmSucc t)   | isval t   = return Nothing
@@ -58,6 +79,10 @@ eval1 (TmApp t1@(TmAbs _ _ body) t2)
     | otherwise = eval1Cons (TmApp t1) t2
 eval1 (TmApp t1 t2) | not $ isval t1 = eval1Cons ((flip TmApp) t2) t1
 eval1 _ = return Nothing
+
+{- ---------------------------------
+ Full evaluation
+ --------------------------------- -}
 
 eval :: Term -> ContextThrowsError Term
 eval t = do mt' <- eval1 t
