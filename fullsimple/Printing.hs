@@ -43,6 +43,7 @@ showTerm (TmIsZero t)    = showOneArg "iszero" t
 showTerm (TmIf t1 t2 t3) = tell "if "   >> showTerm t1 >>
                            tell "then " >> showTerm t2 >>
                            tell "else " >> showTerm t3
+showTerm (TmAscribe t ty) = showTerm t >> tell " as " >> showType ty
 showTerm (TmBind var binding) = modify (appendBinding var binding) >> tell var
 showTerm (TmVar idx ctxLen) 
     = do ctx <- get

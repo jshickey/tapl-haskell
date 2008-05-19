@@ -47,6 +47,7 @@ typeof (TmIf p c a) = do tyP <- typeof p
                                      then return tyC
                                      else throwError ifMismatch
 typeof (TmBind _ b) = liftThrows $ typeOfBinding b
+typeof (TmAscribe t ty) = checkType t ty ty
 typeof (TmVar idx _) = do ctx <- get
                           b <- liftThrows $ bindingOf idx ctx
                           liftThrows $ typeOfBinding b

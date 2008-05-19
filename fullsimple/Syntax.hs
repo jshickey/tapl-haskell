@@ -39,9 +39,10 @@ data Term = TmTrue
           deriving (Show, Eq)
 
 isnumericval :: Term -> Bool
-isnumericval TmZero     = True
-isnumericval (TmSucc t) = isnumericval t
-isnumericval _          = False
+isnumericval TmZero          = True
+isnumericval (TmSucc t)      = isnumericval t
+isnumericval (TmAscribe t _) = isnumericval t
+isnumericval _               = False
 
 isval :: Term -> Bool
 isval TmTrue             = True
@@ -50,6 +51,7 @@ isval TmUnit             = True
 isval (TmFloat _)        = True
 isval (TmString _)       = True
 isval (TmAbs _ _ _)      = True
+isval (TmAscribe t _)    = isval t
 isval (TmTag _ t1 _)     = isval t1
 isval (TmRecord fs)      = and $ map (\(_,t) -> isval t) fs
 isval t | isnumericval t = True

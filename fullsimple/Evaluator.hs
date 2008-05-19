@@ -36,6 +36,7 @@ walk c t f = case t of
                TmIsZero t -> TmIsZero $ walk c t f
                TmIf t1 t2 t3 -> TmIf (walk c t1 f) (walk c t2 f) (walk c t3 f)
                TmTimesFloat t1 t2 -> TmTimesFloat (walk c t1 f) (walk c t2 f)
+               TmAscribe t ty -> TmAscribe (walk c t f) ty
                otherwise -> t
 
 {- ---------------------------------
@@ -75,6 +76,7 @@ eval1 (TmTimesFloat t1@(TmFloat _) t2)
     | not $ isval t2 = eval1Cons (TmTimesFloat t1) t2
 eval1 (TmTimesFloat t1 t2) 
     | not $ isval t1 = eval1Cons ((flip TmTimesFloat) t2) t1
+eval1 (TmAscribe t _) = return $ Just t
 eval1 t@(TmBind var binding) 
       = case binding of
           VarBind ty -> do ctx <- get

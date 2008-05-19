@@ -157,6 +157,13 @@ parseNonApp = parseTrue <|>
               parseString <|>
               parens parseTerm
 
+-- parses a non-application which could be an ascription
+-- (the non-application parsing is left-factored)
+parseNonAppOrAscribe = do t <- parseNonApp
+                          (do reserved "as"
+                              ty <- parseType
+                              return $ TmAscribe t ty) <|> return t
+
 -- For non-applications, we don't need to deal with associativity,
 -- but we need to special handling (in the form of 'chainl1' here)
 -- so that we enforce left-associativity as we aggregate a list of terms
