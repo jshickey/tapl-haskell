@@ -23,8 +23,8 @@ fullSimpleDef = LanguageDef
                 , commentEnd      = "*/"
                 , commentLine     = ""
                 , nestedComments  = False
-                , identStart      = letter <|> char '_'
-                , identLetter     = letter <|> char '_' <|> digit
+                , identStart      = letter 
+                , identLetter     = letter <|> digit
                 , opStart         = fail "no operators"
                 , opLetter        = fail "no operators"
                 , reservedOpNames = []
@@ -43,11 +43,15 @@ whiteSpace    = P.whiteSpace    lexer
 float         = P.float         lexer
 semi          = P.semi          lexer
 stringLiteral = P.stringLiteral lexer
+
 {- ------------------------------
    Parsing Binders
    ------------------------------ -}
 
-parseVarBind = do var <- identifier
+-- due to the definition of "identState" in fullSimpleDef,
+-- this is the only way that an underscore can enter our system,
+-- and thus there is no chance of it being misused as a variable elsewhere
+parseVarBind = do var <- identifier <|> symbol "_"
                   symbol ":"
                   ty <- parseType
                   let binding = VarBind ty
