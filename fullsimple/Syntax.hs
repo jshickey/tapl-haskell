@@ -29,7 +29,7 @@ data Term = TmTrue
           | TmRecord [(String, Term)]
           | TmProj Term String
           | TmFloat Double
-          | TmTimesfloat Term Term
+          | TmTimesFloat Term Term
           | TmZero
           | TmSucc Term
           | TmPred Term

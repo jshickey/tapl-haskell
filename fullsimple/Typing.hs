@@ -31,6 +31,9 @@ typeof TmTrue  = return TyBool
 typeof TmFalse = return TyBool
 typeof TmZero  = return TyNat
 typeof TmUnit  = return TyUnit
+typeof (TmFloat _)  = return TyFloat
+typeof (TmTimesFloat t1 t2) = checkType t1 TyFloat TyFloat >>
+                              checkType t2 TyFloat TyFloat
 typeof (TmString _) = return TyString
 typeof (TmSucc t)   = checkType t TyNat TyNat
 typeof (TmPred t)   = checkType t TyNat TyNat

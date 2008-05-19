@@ -31,6 +31,11 @@ walk c t f = case t of
                TmVar _ _ -> f c t
                TmAbs var ty body -> TmAbs var ty $ walk (c + 1) body f
                TmApp t1 t2 -> TmApp (walk c t1 f) (walk c t2 f)
+               TmSucc t -> TmSucc $ walk c t f
+               TmPred t -> TmPred $ walk c t f
+               TmIsZero t -> TmIsZero $ walk c t f
+               TmIf t1 t2 t3 -> TmIf (walk c t1 f) (walk c t2 f) (walk c t3 f)
+               TmTimesFloat t1 t2 -> TmTimesFloat (walk c t1 f) (walk c t2 f)
                otherwise -> t
 
 {- ---------------------------------
@@ -64,6 +69,12 @@ eval1 (TmIf TmTrue  c a)       = return $ Just c
 eval1 (TmIf TmFalse c a)       = return $ Just a
 eval1 (TmIf p c a) | isval p   = return Nothing 
                    | otherwise = eval1Cons (\p' -> TmIf p' c a) p
+eval1 (TmTimesFloat (TmFloat f1) (TmFloat f2))
+                     = return $ Just $ TmFloat $ f1 * f2
+eval1 (TmTimesFloat t1@(TmFloat _) t2) 
+    | not $ isval t2 = eval1Cons (TmTimesFloat t1) t2
+eval1 (TmTimesFloat t1 t2) 
+    | not $ isval t1 = eval1Cons ((flip TmTimesFloat) t2) t1
 eval1 t@(TmBind var binding) 
       = case binding of
           VarBind ty -> do ctx <- get

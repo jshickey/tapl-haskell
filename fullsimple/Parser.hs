@@ -60,12 +60,21 @@ parseBinder = parseVarBind
    Parsing Types
    ------------------------------ -}
 
-parseTypeBool = reserved "Bool" >> return TyBool
+parseTypeBool   = reserved "Bool"   >> return TyBool
 
-parseTypeNat  = reserved "Nat"  >> return TyNat
+parseTypeNat    = reserved "Nat"    >> return TyNat
 
-parseType = parseTypeBool <|>
-            parseTypeNat
+parseTypeFloat  = reserved "Float"  >> return TyFloat
+
+parseTypeUnit   = reserved "Unit"   >> return TyUnit
+
+parseTypeString = reserved "String" >> return TyString
+
+parseType = parseTypeBool   <|>
+            parseTypeNat    <|>
+            parseTypeFloat  <|>
+            parseTypeUnit   <|>
+            parseTypeString 
 
 {- ------------------------------
    Parsing zero-arg terms
@@ -97,6 +106,11 @@ parseIsZero = parseOneArg "iszero" TmIsZero
    ------------------------------ -}
 
 parseString = liftM TmString stringLiteral 
+
+parseFloat = liftM TmFloat float
+
+parseTimesFloat = reserved "timesfloat" >> 
+                  liftM2 TmTimesFloat parseNonApp parseNonApp
 
 parseIf = do reserved "if"
              t1 <- parseTerm
@@ -130,6 +144,8 @@ parseNonApp = parseTrue <|>
               parsePred <|>
               parseIsZero <|>
               parseIf <|>
+              parseFloat <|>
+              parseTimesFloat <|>
               parseAbs <|>
               (try parseBinder) <|>
               parseVar <|>

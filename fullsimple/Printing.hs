@@ -18,6 +18,7 @@ showType TyBool          = tell "Bool"
 showType TyNat           = tell "Nat"
 showType TyUnit          = tell "Unit"
 showType TyString        = tell "String"
+showType TyFloat         = tell "Float"
 showType (TyArr ty1 ty2) = showType ty1 >> tell " -> " >> showType ty2
 
 {- --------------------------------
@@ -29,6 +30,9 @@ showTerm TmTrue  = tell "true"
 showTerm TmFalse = tell "false"
 showTerm TmZero  = tell "0"
 showTerm TmUnit  = tell "unit"
+showTerm (TmFloat val) = tell $ show val
+showTerm (TmTimesFloat t1 t2) = tell "(timesfloat " >>
+                                showTerm t1 >> showTerm t2 >> tell ")"
 showTerm (TmString str) = tell $ "\"" ++ str ++ "\""
 showTerm (TmSucc t) | isnumericval t = tell $ show $ countSucc 1 t
                     | otherwise      = showOneArg "succ" t
