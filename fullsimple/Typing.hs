@@ -57,9 +57,12 @@ typeof (TmApp t1 t2)
     = do tyT1 <- typeof t1
          tyT2 <- typeof t2
          case tyT1 of
-           (TyArr tyArr1 tyArr2) | tyArr1 == tyT2 -> return tyArr2
-                                 | otherwise      -> throwError badApplication 
+           (TyArr _ _) -> checkTyArr tyT1 tyT2
+           (TyVar _)   -> return tyT2
            otherwise -> throwError notAbstraction
+    where checkTyArr (TyArr tyArr1 tyArr2) tyT2
+              | tyArr1 == tyT2 = return tyArr2
+              | otherwise      = throwError badApplication 
 
 {- -------------------------------------
    typeofBinding
@@ -67,4 +70,6 @@ typeof (TmApp t1 t2)
 
 typeOfBinding :: Binding -> ThrowsError Ty
 typeOfBinding (VarBind ty) = return ty
+typeOfBinding (TmAbbBind _ (Just ty)) = return ty
+typeOfBinding (TyAbbBind ty) = return ty
 typeOfBinding _ = throwError $ Default "No type information exists"

@@ -14,12 +14,20 @@ import Control.Monad.Writer
    -------------------------------- -}
 
 showType :: Ty -> Printer ()
-showType TyBool          = tell "Bool"
-showType TyNat           = tell "Nat"
-showType TyUnit          = tell "Unit"
-showType TyString        = tell "String"
-showType TyFloat         = tell "Float"
-showType (TyArr ty1 ty2) = showType ty1 >> tell " -> " >> showType ty2
+showType TyBool             = tell "Bool"
+showType TyNat              = tell "Nat"
+showType TyUnit             = tell "Unit"
+showType TyString           = tell "String"
+showType TyFloat            = tell "Float"
+showType (TyArr ty1 ty2)    = case ty1 of
+                                TyArr _ _ -> tell "(" >> showType ty1 >>
+                                             tell ") -> " >> showType ty2
+                                otherwise -> showType ty1 >> tell " -> " >> 
+                                             showType ty2
+showType (TyId str)         = tell str
+showType (TyRecord fs)      = undefined -- TODO
+showType (TyVariant fs)     = undefined -- TODO
+showType (TyVar (TmVar idx ctxLen)) = showVar idx ctxLen
 
 {- --------------------------------
    Printing a single Term
@@ -44,13 +52,11 @@ showTerm (TmIf t1 t2 t3) = tell "if "   >> showTerm t1 >>
                            tell "then " >> showTerm t2 >>
                            tell "else " >> showTerm t3
 showTerm (TmAscribe t ty) = showTerm t >> tell " as " >> showType ty
-showTerm (TmBind var binding) = modify (appendBinding var binding) >> tell var
-showTerm (TmVar idx ctxLen) 
-    = do ctx <- get
-         if ctxLength ctx == ctxLen
-           then do name <- liftThrowsToPrinter $ nameOf idx ctx
-                   tell name
-           else throwError $ Default "Context length mismatch"
+showTerm (TmBind var binding) = modify (appendBinding var binding) >> 
+                                case binding of
+                                  TyAbbBind _ -> tell $ var ++ " :: *"
+                                  otherwise   -> tell var
+showTerm (TmVar idx ctxLen) = showVar idx ctxLen
 showTerm (TmAbs var ty body)
     = do ctx <- get
          let name = pickFreshName var ctx
@@ -59,7 +65,10 @@ showTerm (TmAbs var ty body)
          tell ". "
          withBinding name (VarBind ty) $ showTerm body
          tell ")"
-showTerm (TmApp t1 t2) = showTerm t1 >> tell " " >> showTerm t2
+showTerm (TmApp t1 t2) = case t2 of
+                           TmApp _ _ -> showTerm t1 >> tell " (" >> 
+                                        showTerm t2 >> tell ")"
+                           otherwise -> showTerm t1 >> tell " " >> showTerm t2
 
 {- --------------------------------
    Printing a list of Terms
@@ -68,9 +77,14 @@ showTerm (TmApp t1 t2) = showTerm t1 >> tell " " >> showTerm t2
 showTerms :: [Term] -> ThrowsError String
 showTerms = runPrinter . mapM_ showLine 
     where showLine t = showTerm t >> 
-                       tell " : " >> 
-                       (lift (typeof t) >>= showType) >> 
+                       showTypeOfTerm t >>
                        tell "\n"
+
+showTypeOfTerm :: Term -> Printer ()
+showTypeOfTerm (TmBind _ (TyAbbBind _)) = return () 
+showTypeOfTerm (TmBind var TyVarBind) = return ()
+showTypeOfTerm t = tell " : " >> 
+                   (lift (typeof t) >>= showType)
 
 {- --------------------------------
    Helpers
@@ -94,3 +108,13 @@ runPrinter = runContextThrows . execWriterT
 
 liftThrowsToPrinter :: ThrowsError a -> Printer a
 liftThrowsToPrinter = lift . liftThrows
+
+-- for printing the name of a TyVar or a TmVar
+showVar :: Int -> Int -> Printer ()
+showVar idx ctxLen = do ctx <- get
+                        if ctxLength ctx == ctxLen
+                          then do name <- liftThrowsToPrinter $ nameOf idx ctx
+                                  tell name
+                          else throwError $ Default $ "Context length mismatch: " ++ "var had " ++ show ctxLen ++ ", but the context length was " ++ show (ctxLength ctx)
+                               
+

@@ -40,6 +40,10 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
              ,("timesfloat", TmTimesFloat (TmFloat 1.1) (TmFloat 1.2), 
                "timesfloat 1.1 1.2;")
              ,("wildcard", TmAbs "_" TyBool TmTrue, "lambda _:Bool. true;")
+             ,("TyId", TmAbs "x" (TyId "A") TmTrue, "lambda x:A. true;")
+             ,("TyAbbBind", TmBind "A" (TyAbbBind TyBool), "A = Bool;")
+             ,("TyVarBind", TmBind "A" TyVarBind, "A;")
+             ,("TmAbbBind", TmBind "x" (TmAbbBind TmZero (Just TyNat)), "x=0;")
              ]
 
 -- FORMAT: (test name, expected printed output, input)
@@ -68,6 +72,9 @@ evalTests = [("true",  "true : Bool",  "true;")
             ,("nested lambda 2", 
               "(lambda x:Bool. (lambda y:Nat. x)) : Bool -> Nat -> Bool",
               "(lambda x:Bool. (lambda y:Nat. x));")
+            ,("nested lambda 3", 
+              "(lambda f:Nat -> Nat. (lambda x:Nat. f (f x))) : (Nat -> Nat) -> Nat -> Nat",
+              "lambda f:Nat->Nat. lambda x:Nat. f (f x);")
             ,("apply nested lambda 2", 
               "true : Bool",
               "(lambda x:Bool. (lambda y:Nat. x)) true 0;")
@@ -78,9 +85,16 @@ evalTests = [("true",  "true : Bool",  "true;")
                "timesfloat 1.1 1.2;")
             ,("times float after eval", "1.32 : Float", 
               "timesfloat 1.1 ((lambda x:Float. 1.2) 3.0);")
-             ,("wildcard", "(lambda _:Bool. true) : Bool -> Bool", 
-               "lambda _:Bool. true;")
-             ,("apply wildcard", "true : Bool", "(lambda _:Bool. true) false;")
+            ,("wildcard", "(lambda _:Bool. true) : Bool -> Bool", 
+              "lambda _:Bool. true;")
+            ,("apply wildcard", "true : Bool", "(lambda _:Bool. true) false;")
+            ,("TyVarBind", "A", "A;")
+            ,("TyId", "(lambda x:A. x) : A -> A", "lambda x:A. x;")
+            ,("TyAbbBind", "Bfun :: *", "Bfun = Bool -> Bool;")
+            ,("use of TyAbbBind", 
+              "T :: *\n(lambda f:T. (lambda x:Nat. f (f x))) : T -> Nat -> Nat",
+             "T = Nat->Nat; lambda f:T. lambda x:Nat. f (f x);")
+            ,("TmAbbBind", "x : Nat\n0 : Nat", "x = 0; x;")
             ]
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval

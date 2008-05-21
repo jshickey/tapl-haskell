@@ -29,15 +29,23 @@ shift i t = walk 0 t shiftVar
 -- helper function abstracting the common functionality of sub/shift
 walk c t f = case t of
                TmVar _ _ -> f c t
-               TmAbs var ty body -> TmAbs var ty $ walk (c + 1) body f
+               TmAbs var ty body -> TmAbs var (walkType c ty f) 
+                                    (walk (c + 1) body f)
                TmApp t1 t2 -> TmApp (walk c t1 f) (walk c t2 f)
                TmSucc t -> TmSucc $ walk c t f
                TmPred t -> TmPred $ walk c t f
                TmIsZero t -> TmIsZero $ walk c t f
                TmIf t1 t2 t3 -> TmIf (walk c t1 f) (walk c t2 f) (walk c t3 f)
                TmTimesFloat t1 t2 -> TmTimesFloat (walk c t1 f) (walk c t2 f)
-               TmAscribe t ty -> TmAscribe (walk c t f) ty
+               TmAscribe t ty -> TmAscribe (walk c t f) (walkType c ty f)
                otherwise -> t
+
+walkType c ty f = case ty of
+                    TyVar v -> TyVar $ f c v
+                    TyArr ty1 ty2 -> TyArr (walkType c ty1 f)
+                                     (walkType c ty2 f)
+                    TyRecord fs -> error "todo"
+                    TyVariant fs -> error "todo"
 
 {- ---------------------------------
  eval1 helper functions
@@ -77,11 +85,8 @@ eval1 (TmTimesFloat t1@(TmFloat _) t2)
 eval1 (TmTimesFloat t1 t2) 
     | not $ isval t1 = eval1Cons ((flip TmTimesFloat) t2) t1
 eval1 (TmAscribe t _) = return $ Just t
-eval1 t@(TmBind var binding) 
-      = case binding of
-          VarBind ty -> do ctx <- get
-                           put $ appendBinding var binding ctx
-                           return Nothing
+eval1 t@(TmBind var binding) = modify (appendBinding var binding) >>
+                               return Nothing
 eval1 (TmVar idx ctxLen) = do ctx <- get
                               binding <- liftThrows $ bindingOf idx ctx 
                               case binding of

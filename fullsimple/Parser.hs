@@ -9,8 +9,11 @@ import qualified Text.ParserCombinators.Parsec.Token as P
 import Text.ParserCombinators.Parsec.Language
 import Control.Monad
 import Control.Monad.Error
+import Control.Monad.State
+import Data.Char
 
 import Syntax
+import Typing
 import TaplError
 import Context
 
@@ -55,10 +58,30 @@ parseVarBind = do var <- identifier <|> symbol "_"
                   symbol ":"
                   ty <- parseType
                   let binding = VarBind ty
-                  updateState $ \ctx -> appendBinding var binding ctx
+                  updateState $ appendBinding var binding
                   return $ TmBind var binding
 
-parseBinder = parseVarBind
+parseAbbBind = do var <- identifier
+                  binding <- getBinding var
+                  updateState $ appendBinding var binding
+                  return $ TmBind var binding
+    where getBinding var
+                = if (isUpper $ var !! 0)
+                    then (try $ completeTyAbbBind var) <|>
+                         (return TyVarBind)
+                    else do symbol "="
+                            t <- parseTerm
+                            ty <- getType t
+                            return $ TmAbbBind t ty
+          completeTyAbbBind var = do symbol "="
+                                     ty <- parseType
+                                     return $ TyAbbBind ty
+          getType t = do ctx <- getState
+                         case evalState (runErrorT (typeof t)) ctx of
+                           Left err -> return Nothing
+                           Right ty -> return $ Just ty
+
+parseBinder = (try parseVarBind) <|> parseAbbBind
 
 {- ------------------------------
    Parsing Types
@@ -74,11 +97,29 @@ parseTypeUnit   = reserved "Unit"   >> return TyUnit
 
 parseTypeString = reserved "String" >> return TyString
 
-parseType = parseTypeBool   <|>
-            parseTypeNat    <|>
-            parseTypeFloat  <|>
-            parseTypeUnit   <|>
-            parseTypeString 
+parseNamedType  = do ty <- identifier
+                     if isUpper $ ty !! 0
+                       then makeNamedType ty
+                       else fail "types must start with an uppercase letter"
+    where makeNamedType ty       = do ctx <- getState 
+                                      throwsToParser $ makeTyVarOrTyId ty ctx
+          makeTyVarOrTyId ty ctx = catchError (makeTyVar ty ctx) 
+                                   (\e -> return $ TyId ty)
+          makeTyVar       ty ctx = do idx <- indexOf ty ctx
+                                      return $ TyVar $ TmVar idx (ctxLength ctx)
+
+parseFieldType  = fail "todo"
+
+parseTypeArr = parseTypeBool   <|>
+               parseTypeNat    <|>
+               parseTypeFloat  <|>
+               parseTypeUnit   <|>
+               parseTypeString <|>
+               parseNamedType  <|>
+               parseFieldType  <|>
+               braces parseType
+
+parseType = parseTypeArr `chainr1` (symbol "->" >> return TyArr)
 
 {- ------------------------------
    Parsing zero-arg terms
@@ -123,14 +164,12 @@ parseIf = do reserved "if"
              reserved "else"
              liftM (TmIf t1 t2) parseTerm
 
-indexOfForParser var ctx = case indexOf var ctx of
-                             Left err -> fail $ show err
-                             Right val -> return val
-
 parseVar = do var <- identifier
-              ctx <- getState
-              idx <- indexOfForParser var ctx
-              return $ TmVar idx (ctxLength ctx)
+              if (isUpper $ var !! 0)
+                then fail "variables must start with a lowercase letter"
+                else do ctx <- getState
+                        idx <- throwsToParser $ indexOf var ctx
+                        return $ TmVar idx (ctxLength ctx)
 
 parseAbs = do reserved "lambda"
               (TmBind var (VarBind ty)) <- parseVarBind
@@ -179,3 +218,11 @@ parseFullSimple str
     = case runParser parseTerms newContext "fullsimple Parser" str of
         Left err -> throwError $ ParserError $ show err
         Right ts -> return ts
+
+{- ------------------------------
+   Helpers
+   ------------------------------ -}
+
+throwsToParser action = case action of
+                          Left err  -> fail $ show err
+                          Right val -> return val

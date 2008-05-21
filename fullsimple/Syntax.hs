@@ -61,7 +61,7 @@ isval t | isnumericval t = True
    TYPES
    -------------------------------- -}
 
-data Ty = TyVar Int Int
+data Ty = TyVar Term -- the Term will always be a TmVar (a hack to reuse TmVar code)
         | TyId String
         | TyUnit
         | TyArr Ty Ty -- "t1 -> t2"
