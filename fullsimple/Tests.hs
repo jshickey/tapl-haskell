@@ -44,6 +44,8 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
              ,("TyAbbBind", TmBind "A" (TyAbbBind TyBool), "A = Bool;")
              ,("TyVarBind", TmBind "A" TyVarBind, "A;")
              ,("TmAbbBind", TmBind "x" (TmAbbBind TmZero (Just TyNat)), "x=0;")
+             ,("let x", TmLet "x" TmTrue (TmVar 0 1), "let x = true in x;")
+             ,("let _", TmLet "_" TmTrue TmFalse, "let _ = true in false;")
              ]
 
 -- FORMAT: (test name, expected printed output, input)
@@ -95,6 +97,14 @@ evalTests = [("true",  "true : Bool",  "true;")
               "T :: *\n(lambda f:T. (lambda x:Nat. f (f x))) : T -> Nat -> Nat",
              "T = Nat->Nat; lambda f:T. lambda x:Nat. f (f x);")
             ,("TmAbbBind", "x : Nat\n0 : Nat", "x = 0; x;")
+            ,("let x", "true : Bool", "let x = true in x;")
+            ,("let _", "false : Bool", "let _ = true in false;")
+            ,("nested lets", "1.32 : Float", 
+              "let x = 1.2 in let y = 1.1 in timesfloat y x;")
+            ,("eval let term", "1.32 : Float",
+              "let x = (timesfloat 1.1 1.2) in x;")
+            ,("shift let", "1.3 : Float",
+              "(lambda x:Float. let y = x in timesfloat y 1.3) 1.0;")
             ]
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval

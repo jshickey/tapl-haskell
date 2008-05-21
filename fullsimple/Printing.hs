@@ -40,7 +40,8 @@ showTerm TmZero  = tell "0"
 showTerm TmUnit  = tell "unit"
 showTerm (TmFloat val) = tell $ show val
 showTerm (TmTimesFloat t1 t2) = tell "(timesfloat " >>
-                                showTerm t1 >> showTerm t2 >> tell ")"
+                                showTerm t1 >> tell " " >>
+                                showTerm t2 >> tell ")"
 showTerm (TmString str) = tell $ "\"" ++ str ++ "\""
 showTerm (TmSucc t) | isnumericval t = tell $ show $ countSucc 1 t
                     | otherwise      = showOneArg "succ" t
@@ -65,6 +66,13 @@ showTerm (TmAbs var ty body)
          tell ". "
          withBinding name (VarBind ty) $ showTerm body
          tell ")"
+showTerm (TmLet var t body)
+    = do ctx <- get
+         let name = pickFreshName var ctx
+         tell $ "let " ++ name ++ " = "
+         showTerm t
+         tell " in "
+         withBinding name NameBind $ showTerm body
 showTerm (TmApp t1 t2) = case t2 of
                            TmApp _ _ -> showTerm t1 >> tell " (" >> 
                                         showTerm t2 >> tell ")"

@@ -31,6 +31,8 @@ walk c t f = case t of
                TmVar _ _ -> f c t
                TmAbs var ty body -> TmAbs var (walkType c ty f) 
                                     (walk (c + 1) body f)
+               TmLet var t body -> TmLet var (walk c t f) 
+                                   (walk (c + 1) body f)
                TmApp t1 t2 -> TmApp (walk c t1 f) (walk c t2 f)
                TmSucc t -> TmSucc $ walk c t f
                TmPred t -> TmPred $ walk c t f
@@ -96,6 +98,8 @@ eval1 (TmApp t1@(TmAbs _ _ body) t2)
     | isval t2  = return $ Just $ apply t2 body
     | otherwise = eval1Cons (TmApp t1) t2
 eval1 (TmApp t1 t2) | not $ isval t1 = eval1Cons ((flip TmApp) t2) t1
+eval1 (TmLet var t body) | isval t   = return $ Just $ apply t body
+                         | otherwise = eval1Cons (\t' -> TmLet var t' body) t
 eval1 _ = return Nothing
 
 {- ---------------------------------

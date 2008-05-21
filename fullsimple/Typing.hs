@@ -53,6 +53,8 @@ typeof (TmVar idx _) = do ctx <- get
                           liftThrows $ typeOfBinding b
 typeof (TmAbs var ty body) = withBinding var (VarBind ty) $ 
                              liftM (TyArr ty) $ typeof body 
+typeof (TmLet var t body)  = do ty <- typeof t
+                                withBinding var (VarBind ty) $ typeof body
 typeof (TmApp t1 t2) 
     = do tyT1 <- typeof t1
          tyT2 <- typeof t2

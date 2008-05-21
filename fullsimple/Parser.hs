@@ -61,7 +61,7 @@ parseVarBind = do var <- identifier <|> symbol "_"
                   updateState $ appendBinding var binding
                   return $ TmBind var binding
 
-parseAbbBind = do var <- identifier
+parseAbbBind = do var <- identifier <|> symbol "_"
                   binding <- getBinding var
                   updateState $ appendBinding var binding
                   return $ TmBind var binding
@@ -176,6 +176,14 @@ parseAbs = do reserved "lambda"
               symbol "."
               liftM (TmAbs var ty) parseTerm
 
+parseLet = do reserved "let"
+              (TmBind var binding) <- parseAbbBind
+              reserved "in"
+              body <- parseTerm
+              case binding of
+                TmAbbBind t ty -> return $ TmLet var t body
+                otherwise      -> fail "malformed let statement"
+
 {- ------------------------------
    Putting it all together
    ------------------------------ -}
@@ -190,6 +198,7 @@ parseNonApp = parseTrue <|>
               parseFloat <|>
               parseTimesFloat <|>
               parseAbs <|>
+              parseLet <|>
               (try parseBinder) <|>
               parseVar <|>
               parseUnit <|>
