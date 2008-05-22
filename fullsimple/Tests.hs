@@ -46,6 +46,16 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
              ,("TmAbbBind", TmBind "x" (TmAbbBind TmZero (Just TyNat)), "x=0;")
              ,("let x", TmLet "x" TmTrue (TmVar 0 1), "let x = true in x;")
              ,("let _", TmLet "_" TmTrue TmFalse, "let _ = true in false;")
+             ,("record of 0", TmRecord [], "{};")
+             ,("record of 1, named", TmRecord [("x", TmFloat 1.1)], "{x=1.1};")
+             ,("record of 1, unnamed", TmRecord [("1", TmFloat 1.1)], "{1.1};")
+             ,("record of 2, no names", 
+               TmRecord [("1", TmFloat 1.1), ("2", TmFloat 1.2)], 
+               "{1.1, 1.2};")
+             ,("record of 2, named", 
+               TmRecord [("x", TmFloat 1.1), ("y", TmFloat 1.2)], 
+               "{ x  = 1.1   , y=1.2};")
+             ,("proj", TmProj (TmRecord []) "x", "{}.x;")
              ]
 
 -- FORMAT: (test name, expected printed output, input)
@@ -105,6 +115,20 @@ evalTests = [("true",  "true : Bool",  "true;")
               "let x = (timesfloat 1.1 1.2) in x;")
             ,("shift let", "1.3 : Float",
               "(lambda x:Float. let y = x in timesfloat y 1.3) 1.0;")
+            ,("record", "{x=(lambda x:Nat. x), y=(lambda z:Bool. z)} : {x:Nat -> Nat, y:Bool -> Bool}",
+              "{x=lambda x:Nat.x, y=lambda z:Bool.z};")
+            ,("proj 1", "(lambda x:Nat. x) : Nat -> Nat",
+              "{x=lambda x:Nat.x, y=lambda z:Bool.z}.x;")
+            ,("proj 2", "(lambda x:Nat. x) : Nat -> Nat",
+              "{lambda x:Nat.x, lambda z:Bool.z}.1;")
+            ,("proj 3", "(lambda z:Bool. z) : Bool -> Bool",
+              "{lambda x:Nat.x, lambda z:Bool.z}.2;")
+            ,("proj 4", "(lambda z:Nat. z) : Nat -> Nat",
+              "{x=(lambda x:Nat->Nat.x)(lambda z:Nat. z),y=lambda z:Bool.z}.x;")
+            ,("proj 5", "{x=true, y=false} : {x:Bool, y:Bool}", "{x=true, y=false};")
+            ,("proj 6", "true : Bool", "{x=true, y=false}.x;")
+            ,("proj 7", "{true, false} : {Bool, Bool}", "{true, false}; ")
+            ,("proj 8", "true : Bool", "{true, false}.1;")
             ]
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval

@@ -40,14 +40,17 @@ walk c t f = case t of
                TmIf t1 t2 t3 -> TmIf (walk c t1 f) (walk c t2 f) (walk c t3 f)
                TmTimesFloat t1 t2 -> TmTimesFloat (walk c t1 f) (walk c t2 f)
                TmAscribe t ty -> TmAscribe (walk c t f) (walkType c ty f)
+               TmProj t i -> TmProj (walk c t f) i
+               TmRecord fs -> TmRecord $ map (\(n,t) -> (n, (walk c t f))) fs
                otherwise -> t
 
 walkType c ty f = case ty of
                     TyVar v -> TyVar $ f c v
                     TyArr ty1 ty2 -> TyArr (walkType c ty1 f)
                                      (walkType c ty2 f)
-                    TyRecord fs -> error "todo"
+                    TyRecord fields -> TyRecord $ map (\(n,ty) -> (n, walkType c ty f)) fields
                     TyVariant fs -> error "todo"
+                    otherwise -> ty
 
 {- ---------------------------------
  eval1 helper functions
@@ -100,6 +103,19 @@ eval1 (TmApp t1@(TmAbs _ _ body) t2)
 eval1 (TmApp t1 t2) | not $ isval t1 = eval1Cons ((flip TmApp) t2) t1
 eval1 (TmLet var t body) | isval t   = return $ Just $ apply t body
                          | otherwise = eval1Cons (\t' -> TmLet var t' body) t
+eval1 (TmRecord fs) = liftM (liftM TmRecord) $ iter fs
+    where iter :: [(String,Term)] -> ContextThrowsError (Maybe [(String,Term)])
+          iter [] = return Nothing
+          iter ((n,t):fs) | isval t   = liftM (liftM ((n,t): )) $ iter fs
+                          | otherwise = liftM (liftM (\t' -> ((n,t'):fs))) $ eval1 t
+eval1 (TmProj r name) 
+    | not $ isval r = eval1Cons (\r' -> TmProj r' name) r
+eval1 (TmProj r@(TmRecord fs) name) 
+    | isval r = access name fs
+    where access name [] = throwError $ EvalError $ 
+                           "Field " ++ name ++ " does not exist"
+          access name ((n,t):fs) | n == name = return $ Just t
+                                 | otherwise = access name fs
 eval1 _ = return Nothing
 
 {- ---------------------------------

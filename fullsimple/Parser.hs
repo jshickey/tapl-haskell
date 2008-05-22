@@ -45,7 +45,9 @@ symbol        = P.symbol        lexer
 whiteSpace    = P.whiteSpace    lexer
 float         = P.float         lexer
 semi          = P.semi          lexer
+comma         = P.comma         lexer
 stringLiteral = P.stringLiteral lexer
+integer       = P.integer       lexer
 
 {- ------------------------------
    Parsing Binders
@@ -171,18 +173,51 @@ parseVar = do var <- identifier
                         idx <- throwsToParser $ indexOf var ctx
                         return $ TmVar idx (ctxLength ctx)
 
+{- ------------------------------
+   let/lambda
+   ------------------------------ -}
+
+-- for both let and lambda, we need to make sure we restore the
+-- state after parsing the body, so that the lexical binding doesn't leak
 parseAbs = do reserved "lambda"
+              ctx <- getState
               (TmBind var (VarBind ty)) <- parseVarBind
               symbol "."
-              liftM (TmAbs var ty) parseTerm
+              body <- parseTerm
+              setState ctx
+              return $ TmAbs var ty body
 
 parseLet = do reserved "let"
+              ctx <- getState
               (TmBind var binding) <- parseAbbBind
               reserved "in"
               body <- parseTerm
+              setState ctx
               case binding of
                 TmAbbBind t ty -> return $ TmLet var t body
                 otherwise      -> fail "malformed let statement"
+
+{- ------------------------------
+   Records and Projections
+   ------------------------------ -}
+
+-- Fields can either be named or not.  If they are not, then they
+-- are numbered starting with 1.  To keep parsing the fields simple,
+-- we label them with -1 at first if they have no name.  We then
+-- replace the -1's with the correct index as a post-processing step.
+parseRecord = braces $ liftM TmRecord $ liftM (addNumbers 1) $ 
+              sepBy parseRecordField comma
+    where addNumbers _ [] = []
+          addNumbers i (("-1",t):fs) = (show i, t) : (addNumbers (i+1) fs)
+          addNumbers i (       f:fs) =           f : (addNumbers (i+1) fs)
+
+parseRecordField = liftM2 (,) parseName parseTerm
+    where parseName = (try (do {name <- identifier; symbol "="; return name}))
+                      <|> return "-1"
+
+parseProj = do t <- parseRecord <|> parens parseTerm
+               symbol "."
+               liftM (TmProj t) (identifier <|> (liftM show integer))
 
 {- ------------------------------
    Putting it all together
@@ -203,6 +238,8 @@ parseNonApp = parseTrue <|>
               parseVar <|>
               parseUnit <|>
               parseString <|>
+              (try parseProj) <|>
+              parseRecord <|>
               parens parseTerm
 
 -- parses a non-application which could be an ascription

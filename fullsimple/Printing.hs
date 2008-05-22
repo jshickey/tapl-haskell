@@ -25,7 +25,12 @@ showType (TyArr ty1 ty2)    = case ty1 of
                                 otherwise -> showType ty1 >> tell " -> " >> 
                                              showType ty2
 showType (TyId str)         = tell str
-showType (TyRecord fs)      = undefined -- TODO
+showType (TyRecord [])      = tell "{}"
+showType (TyRecord (f:fs))  = tell "{" >> showField f >> 
+                              mapM_ (\f -> tell ", " >> showField f) fs >>
+                              tell "}"
+    where showField (n,ty) | isnumber n = showType ty
+                           | otherwise  = tell (n ++ ":") >> showType ty
 showType (TyVariant fs)     = undefined -- TODO
 showType (TyVar (TmVar idx ctxLen)) = showVar idx ctxLen
 
@@ -77,6 +82,13 @@ showTerm (TmApp t1 t2) = case t2 of
                            TmApp _ _ -> showTerm t1 >> tell " (" >> 
                                         showTerm t2 >> tell ")"
                            otherwise -> showTerm t1 >> tell " " >> showTerm t2
+showTerm (TmRecord [])     = tell "{}"
+showTerm (TmRecord (f:fs)) = tell "{" >> showField f >>
+                             mapM_ (\f -> tell ", " >> showField f) fs >>
+                             tell "}"
+    where showField (n,t) | isnumber n = showTerm t
+                          | otherwise  = tell (n ++ "=") >> showTerm t
+showTerm (TmProj t name) = showTerm t >> tell ("." ++ name)
 
 {- --------------------------------
    Printing a list of Terms
@@ -124,5 +136,6 @@ showVar idx ctxLen = do ctx <- get
                           then do name <- liftThrowsToPrinter $ nameOf idx ctx
                                   tell name
                           else throwError $ Default $ "Context length mismatch: " ++ "var had " ++ show ctxLen ++ ", but the context length was " ++ show (ctxLength ctx)
-                               
 
+isnumber :: String -> Bool                               
+isnumber n = elem n $ map show [0..9]

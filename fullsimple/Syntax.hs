@@ -7,6 +7,7 @@ module Syntax where
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Error
+
 import TaplError    
 
 {- --------------------------------
