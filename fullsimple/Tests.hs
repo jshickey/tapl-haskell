@@ -64,6 +64,10 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
                          [("x", ("val", (TmVar 0 1)))],
                "case (<x=true> as <x:Bool>) of <x=val> ==> val;")
              ,("inert", TmInert TyBool, "inert[Bool];")
+             ,("fix", TmFix (TmAbs "x" TyBool TmTrue), 
+               "fix (lambda x:Bool. true);")
+             ,("letrec", TmLet "x" (TmFix (TmAbs "x" TyBool TmTrue)) (TmVar 0 1),
+               "letrec x:Bool = true in x;")
              ]
 
 -- FORMAT: (test name, expected printed output, input)
@@ -156,8 +160,29 @@ evalTests = [("true",  "true : Bool",  "true;")
             ,("unevaled case", 
               "(case <x=true> as <x:Bool, y:Nat, z:Nat> of <y=val> ==> val | <z=w> ==> w) : Nat",
               "case (<x=true> as <x:Bool, y:Nat, z:Nat>) of <y=val> ==> val | <z=w> ==> w;")
-             ,("inert", "inert[Bool] : Bool", "inert[Bool];")
+            ,("inert", "inert[Bool] : Bool", "inert[Bool];")
+            ,("simple letrec", "true : Bool",
+              "letrec x:Bool = true in x;")
+            ,("iseven letrec 1", "true : Bool",
+              testLetrec ++ "in iseven (succ (succ (succ (succ 0))));")
+            ,("iseven letrec 2", "false : Bool",
+              testLetrec ++ "in iseven (succ (succ (succ (succ (succ 0)))));")
+            ,("simple fix", "true : Bool", 
+              "fix (lambda x:Bool. true);")
+            ,("iseven ff 1", "true : Bool",
+              "(fix " ++ testIsevenFF ++ ") (succ (succ (succ (succ 0))));")
+            ,("iseven ff 2", "false : Bool",
+              "(fix " ++ testIsevenFF ++ ") (succ (succ (succ (succ (succ 0)))));")
             ]
+
+testLetrec = "letrec iseven : Nat -> Bool = lambda x:Nat. " ++
+             "if iszero x then true " ++ 
+             "else if iszero (pred x) then false " ++ 
+             "else iseven (pred (pred x))"
+testIsevenFF = "(lambda ie:Nat -> Bool. lambda x:Nat. " ++ 
+               "if iszero x then true  " ++ 
+               "else if iszero (pred x) then false " ++ 
+               "else ie (pred (pred x)))"
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                  return $ TestList $ concat

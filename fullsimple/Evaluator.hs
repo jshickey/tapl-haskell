@@ -47,6 +47,7 @@ walk c t f = case t of
                                          (n,(v, (walk (c+1) t f)))) branches
                TmTag v t ty -> TmTag v (walk c t f) (walkType c ty f)
                TmInert ty -> TmInert $ walkType c ty f
+               TmFix t -> TmFix $ walk c t f
                otherwise -> t
 
 walkType c ty f = case ty of
@@ -130,6 +131,8 @@ eval1 (TmCase (TmTag var t _) fs) = branch fs
               | otherwise    = return Nothing
 eval1 (TmTag var t ty) | isval t   = return Nothing
                        | otherwise = eval1Cons (\t' -> TmTag var t' ty) t
+eval1 (TmFix t) | not $ isval t     = eval1Cons TmFix t
+eval1 t@(TmFix (TmAbs var ty body)) = return $ Just $ apply t body
 eval1 _ = return Nothing
 
 {- ---------------------------------

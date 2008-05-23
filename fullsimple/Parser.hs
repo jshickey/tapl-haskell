@@ -65,27 +65,38 @@ parseVarBind = do var <- identifier <|> symbol "_"
                   updateState $ appendBinding var binding
                   return $ TmBind var binding
 
-parseAbbBind = do var <- identifier <|> symbol "_"
-                  binding <- getBinding var
-                  updateState $ appendBinding var binding
-                  return $ TmBind var binding
-    where getBinding var
-                = if (isUpper $ var !! 0)
-                    then (try $ completeTyAbbBind var) <|>
-                         (return TyVarBind)
-                    else do symbol "="
-                            t <- parseTerm
-                            ty <- getType t
-                            return $ TmAbbBind t ty
-          completeTyAbbBind var = do symbol "="
-                                     ty <- parseType
-                                     return $ TyAbbBind ty
-          getType t = do ctx <- getState
-                         case evalState (runErrorT (typeof t)) ctx of
-                           Left err -> return Nothing
-                           Right ty -> return $ Just ty
 
-parseBinder = (try parseVarBind) <|> parseAbbBind
+parseAbbBind forLetrec
+    = do var <- identifier <|> symbol "_"
+         -- For a letrec, we need to temporarily add a binding, so that
+         -- we can lookup this variable while parsing the body.  
+         -- Note that both setState calls use the original Context
+         ctx <- getState
+         when forLetrec $ setState $ appendBinding var NameBind ctx
+         binding <- getBinding var
+         setState $ appendBinding var binding ctx
+         return $ TmBind var binding
+    where getBinding var = if (isUpper $ var !! 0)
+                           then (try $ completeTyAbbBind var) <|>
+                                (return TyVarBind)
+                           else withType <|> withoutType
+          withoutType    = do symbol "="
+                              t <- parseTerm
+                              liftM (TmAbbBind t) (getType t)
+          withType       = do symbol ":"
+                              ty <- parseType
+                              symbol "="
+                              liftM ((flip TmAbbBind) (Just ty)) parseTerm
+          completeTyAbbBind var 
+                         = do symbol "="
+                              ty <- parseType
+                              return $ TyAbbBind ty
+          getType t      = do ctx <- getState
+                              case evalState (runErrorT (typeof t)) ctx of
+                                Left err -> return Nothing
+                                Right ty -> return $ Just ty
+
+parseBinder = (try parseVarBind) <|> (parseAbbBind False)
 
 {- ------------------------------
    Parsing Types
@@ -200,13 +211,31 @@ parseAbs = do reserved "lambda"
 
 parseLet = do reserved "let"
               ctx <- getState
-              (TmBind var binding) <- parseAbbBind
+              (TmBind var binding) <- (parseAbbBind False)
               reserved "in"
               body <- parseTerm
               setState ctx
               case binding of
                 TmAbbBind t ty -> return $ TmLet var t body
                 otherwise      -> fail "malformed let statement"
+
+{- ------------------------------
+   Fix and Letrec
+   ------------------------------ -}
+
+parseLetrec = do reserved "letrec"
+                 ctx <- getState
+                 (TmBind var binding) <- (parseAbbBind True)
+                 reserved "in"
+                 body <- parseTerm
+                 setState ctx
+                 case binding of
+                   TmAbbBind t (Just ty)
+                       -> return $ TmLet var (TmFix (TmAbs var ty t)) body
+                   otherwise      
+                       -> fail "malformed letrec statement"
+
+parseFix = reserved "fix" >> liftM TmFix parseTerm
 
 {- ------------------------------
    Records and Projections
@@ -282,6 +311,8 @@ parseNonApp = parseTrue <|>
               parseCase <|>
               parseVariant <|>
               parseInert <|>
+              parseFix <|>
+              parseLetrec <|>
               parens parseTerm
 
 -- parses a non-application which could be an ascription

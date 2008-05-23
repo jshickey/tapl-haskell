@@ -13,7 +13,7 @@ badApplication = TypeMismatch "Invalid argument passed to an abstraction"
 notAbstraction = TypeMismatch "First term of application must be an abstraction"
 expectedBool = TypeMismatch "The conditional of an if-statement must be a Bool"
 ifMismatch = TypeMismatch "Predicate and alternative of an if-statement must be of the same type"
-projError = TypeMismatch "A projection can only be applied to a record."
+projError = TypeMismatch "A projection can only be applied to a record"
 
 checkType :: Term -> Ty -> Ty -> ContextThrowsError Ty
 checkType t expected output
@@ -77,6 +77,10 @@ typeof (TmTag _ _ ty) = return ty
 typeof (TmCase t ((label,_):cs)) = do (TyVariant fs) <- typeof t
                                       accessField label fs
 typeof (TmInert ty) = return ty
+typeof (TmFix t) = do ty <- typeof t
+                      case ty of
+                        TyArr t1 t2 | t1 == t2 -> return t1
+                        otherwise -> throwError $ TypeMismatch "bad fix type"
 typeof _ = throwError $ Default "Unknown type"
 
 accessField name [] = throwError $ TypeMismatch $ "No field " ++ name
