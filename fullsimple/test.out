@@ -1,5 +1,4 @@
-(lambda x:<a:Bool,b:Bool>. x)
-  : <a:Bool,b:Bool> -> <a:Bool, b:Bool>
+(lambda x:<a:Bool, b:Bool>. x) : <a:Bool, b:Bool> -> <a:Bool, b:Bool>
 "hello" : String
 unit : Unit
 (lambda x:A. x) : A -> A
@@ -14,4 +13,4 @@ true : Bool
 (lambda x:Nat. (succ x)) : Nat -> Nat
 3 : Nat
 T :: *
-(lambda f:T. lambda x:Nat. f (f x)) : T -> Nat -> Nat
+(lambda f:T. (lambda x:Nat. f (f x))) : T -> Nat -> Nat

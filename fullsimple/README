@@ -9,3 +9,6 @@ SAMPLE USAGE:
 
 See the Makefile for all targets.
 
+NOTES:
+
+Formatting changes have been made to test.out, which was originally constructed as the output of calling the OCaml implementation on test.f.

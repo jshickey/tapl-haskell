@@ -162,7 +162,7 @@ getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                         [ map (makeParseTest parseFullSimple) parseTests
                         , map (makeEvalTest  parseAndEval)    evalTests
                         , map (makeEvalTest  parseAndEval)    tyarithEvalTests
--- TODO                        , [testDotFTest]
+                        , [testDotFTest]
                         ]
                          
 
