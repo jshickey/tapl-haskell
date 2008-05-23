@@ -46,6 +46,7 @@ whiteSpace    = P.whiteSpace    lexer
 float         = P.float         lexer
 semi          = P.semi          lexer
 comma         = P.comma         lexer
+colon         = P.colon         lexer
 stringLiteral = P.stringLiteral lexer
 integer       = P.integer       lexer
 
@@ -110,7 +111,14 @@ parseNamedType  = do ty <- identifier
           makeTyVar       ty ctx = do idx <- indexOf ty ctx
                                       return $ TyVar $ TmVar idx (ctxLength ctx)
 
-parseFieldType  = fail "todo"
+parseVariantType = do symbol "<"
+                      fields <- sepBy1 parseField comma
+                      symbol ">"
+                      return $ TyVariant fields
+    where parseField = do var <- identifier
+                          colon
+                          ty <- parseType
+                          return (var, ty)
 
 parseTypeArr = parseTypeBool   <|>
                parseTypeNat    <|>
@@ -118,7 +126,7 @@ parseTypeArr = parseTypeBool   <|>
                parseTypeUnit   <|>
                parseTypeString <|>
                parseNamedType  <|>
-               parseFieldType  <|>
+               parseVariantType  <|>
                braces parseType
 
 parseType = parseTypeArr `chainr1` (symbol "->" >> return TyArr)
@@ -220,6 +228,34 @@ parseProj = do t <- parseRecord <|> parens parseTerm
                liftM (TmProj t) (identifier <|> (liftM show integer))
 
 {- ------------------------------
+   Variants and Cases
+   ------------------------------ -}
+
+parseVariant = do symbol "<"
+                  var <- identifier
+                  symbol "="
+                  t <- parseTerm
+                  symbol ">"
+                  reserved "as"
+                  liftM (TmTag var t) parseType
+
+parseCase = do reserved "case"
+               t <- parseTerm
+               reserved "of"
+               liftM (TmCase t) $ sepBy1 parseBranch (symbol "|")
+    where parseBranch = do symbol "<"
+                           label <- identifier
+                           symbol "="
+                           var <- identifier
+                           symbol ">"
+                           symbol "==>"
+                           ctx <- getState
+                           setState $ appendBinding var NameBind ctx
+                           t <- parseTerm
+                           setState ctx
+                           return (label, (var,t))
+
+{- ------------------------------
    Putting it all together
    ------------------------------ -}
 
@@ -240,6 +276,8 @@ parseNonApp = parseTrue <|>
               parseString <|>
               (try parseProj) <|>
               parseRecord <|>
+              parseCase <|>
+              parseVariant <|>
               parens parseTerm
 
 -- parses a non-application which could be an ascription

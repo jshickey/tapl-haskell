@@ -55,6 +55,7 @@ isval (TmAbs _ _ _)      = True
 isval (TmAscribe t _)    = isval t
 isval (TmTag _ t1 _)     = isval t1
 isval (TmRecord fs)      = and $ map (\(_,t) -> isval t) fs
+isval (TmTag _ t _)      = isval t
 isval t | isnumericval t = True
         | otherwise      = False
 

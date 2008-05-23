@@ -31,7 +31,11 @@ showType (TyRecord (f:fs))  = tell "{" >> showField f >>
                               tell "}"
     where showField (n,ty) | isnumber n = showType ty
                            | otherwise  = tell (n ++ ":") >> showType ty
-showType (TyVariant fs)     = undefined -- TODO
+showType (TyVariant [])     = tell "<>"
+showType (TyVariant (f:fs)) = tell "<" >> showField f >>
+                              mapM_ (\f -> tell ", " >> showField f) fs >>
+                              tell ">"
+    where showField (n,ty) = tell (n ++ ":") >> showType ty
 showType (TyVar (TmVar idx ctxLen)) = showVar idx ctxLen
 
 {- --------------------------------
@@ -88,6 +92,18 @@ showTerm (TmRecord (f:fs)) = tell "{" >> showField f >>
                              tell "}"
     where showField (n,t) | isnumber n = showTerm t
                           | otherwise  = tell (n ++ "=") >> showTerm t
+showTerm (TmCase t (c:cs)) = tell "(case " >> showTerm t >> tell " of " >>
+                             showBranch c >> showBranches cs >> tell ")"
+    where showBranches []     = return ()
+          showBranches (c:cs) = tell " | " >> showBranch c >> showBranches cs
+          showBranch (label, (var, term)) 
+              = do tell ("<" ++ label ++ "=" ++
+                         var ++ "> ==> ")
+                   withBinding var NameBind $ showTerm term
+showTerm (TmTag var t ty) = tell ("<" ++ var ++ "=") >>
+                            showTerm t >>
+                            tell "> as " >>
+                            showType ty
 showTerm (TmProj t name) = showTerm t >> tell ("." ++ name)
 
 {- --------------------------------

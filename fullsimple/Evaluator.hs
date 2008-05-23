@@ -42,15 +42,20 @@ walk c t f = case t of
                TmAscribe t ty -> TmAscribe (walk c t f) (walkType c ty f)
                TmProj t i -> TmProj (walk c t f) i
                TmRecord fs -> TmRecord $ map (\(n,t) -> (n, (walk c t f))) fs
+               TmCase t branches -> TmCase (walk c t f) $
+                                    map (\(n,(v,t)) -> 
+                                         (n,(v, (walk (c+1) t f)))) branches
+               TmTag v t ty -> TmTag v (walk c t f) (walkType c ty f)
                otherwise -> t
 
 walkType c ty f = case ty of
                     TyVar v -> TyVar $ f c v
                     TyArr ty1 ty2 -> TyArr (walkType c ty1 f)
                                      (walkType c ty2 f)
-                    TyRecord fields -> TyRecord $ map (\(n,ty) -> (n, walkType c ty f)) fields
-                    TyVariant fs -> error "todo"
+                    TyRecord  fields -> TyRecord  $ walkFields fields
+                    TyVariant fields -> TyVariant $ walkFields fields
                     otherwise -> ty
+    where walkFields = map (\(n,ty) -> (n, walkType c ty f))
 
 {- ---------------------------------
  eval1 helper functions
@@ -116,6 +121,14 @@ eval1 (TmProj r@(TmRecord fs) name)
                            "Field " ++ name ++ " does not exist"
           access name ((n,t):fs) | n == name = return $ Just t
                                  | otherwise = access name fs
+eval1 (TmCase t fs) | not $ isval t = eval1Cons ((flip TmCase) fs) t
+eval1 (TmCase (TmTag var t _) fs) = branch fs
+    where branch [] = throwError $ EvalError "No applicable branch"
+          branch ((label, (name, body)):fs)
+              | label == var = return $ Just $ apply t body
+              | otherwise    = return Nothing
+eval1 (TmTag var t ty) | isval t   = return Nothing
+                       | otherwise = eval1Cons (\t' -> TmTag var t' ty) t
 eval1 _ = return Nothing
 
 {- ---------------------------------

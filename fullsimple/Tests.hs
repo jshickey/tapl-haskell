@@ -56,6 +56,13 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
                TmRecord [("x", TmFloat 1.1), ("y", TmFloat 1.2)], 
                "{ x  = 1.1   , y=1.2};")
              ,("proj", TmProj (TmRecord []) "x", "{}.x;")
+             ,("variant 1", TmTag "x" TmTrue (TyVariant [("x",TyBool)]),
+               "<x=true> as <x:Bool>;")
+             ,("variant 2", TmTag "x" TmTrue (TyVariant [("x",TyBool), ("y", TyNat)]),
+               "<x=true> as <x:Bool,y:Nat>;")
+             ,("case 1", TmCase (TmTag "x" TmTrue (TyVariant [("x",TyBool)]))
+                         [("x", ("val", (TmVar 0 1)))],
+               "case (<x=true> as <x:Bool>) of <x=val> ==> val;")
              ]
 
 -- FORMAT: (test name, expected printed output, input)
@@ -129,6 +136,25 @@ evalTests = [("true",  "true : Bool",  "true;")
             ,("proj 6", "true : Bool", "{x=true, y=false}.x;")
             ,("proj 7", "{true, false} : {Bool, Bool}", "{true, false}; ")
             ,("proj 8", "true : Bool", "{true, false}.1;")
+            ,("variant 1", "<x=true> as <x:Bool> : <x:Bool>",
+              "<x=true> as <x:Bool>;")
+            ,("variant 2", "<x=true> as <x:Bool, y:Nat> : <x:Bool, y:Nat>",
+              "<x=true> as <x:Bool,y:Nat>;")
+            ,("variant 3", "(lambda x:<a:Bool, b:Bool>. x) : <a:Bool, b:Bool> -> <a:Bool, b:Bool>",
+              "lambda x:<a:Bool,b:Bool>. x;")
+            ,("case 1", "true : Bool",
+              "case (<x=true> as <x:Bool>) of <x=val> ==> val;")
+            ,("case 2", "true : Bool",
+              "case (<x=true> as <y:Nat,x:Bool>) of <x=val> ==> val;")
+            ,("case 3", "false : Bool",
+              "case ((lambda x:Bool. <y=x> as <z:Nat, y:Bool>) false) of <y=val> ==> val;")
+            ,("case 4", "true : Bool",
+              "case (<x=true> as <y:Bool, x:Bool>) of <x=val> ==> val | <y=val> ==> val;")
+            ,("case 5", "1.32 : Float",
+              "case (<x=1.1> as <x:Float>) of <x=val> ==> ((lambda z:Float. timesfloat z val) 1.2);")
+            ,("unevaled case", 
+              "(case <x=true> as <x:Bool, y:Nat, z:Nat> of <y=val> ==> val | <z=w> ==> w) : Nat",
+              "case (<x=true> as <x:Bool, y:Nat, z:Nat>) of <y=val> ==> val | <z=w> ==> w;")
             ]
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
