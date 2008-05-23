@@ -105,6 +105,7 @@ showTerm (TmTag var t ty) = tell ("<" ++ var ++ "=") >>
                             tell "> as " >>
                             showType ty
 showTerm (TmProj t name) = showTerm t >> tell ("." ++ name)
+showTerm (TmInert ty) = tell "inert[" >> showType ty >> tell "]"
 
 {- --------------------------------
    Printing a list of Terms

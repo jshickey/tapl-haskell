@@ -46,6 +46,7 @@ walk c t f = case t of
                                     map (\(n,(v,t)) -> 
                                          (n,(v, (walk (c+1) t f)))) branches
                TmTag v t ty -> TmTag v (walk c t f) (walkType c ty f)
+               TmInert ty -> TmInert $ walkType c ty f
                otherwise -> t
 
 walkType c ty f = case ty of

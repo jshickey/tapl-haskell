@@ -63,6 +63,7 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
              ,("case 1", TmCase (TmTag "x" TmTrue (TyVariant [("x",TyBool)]))
                          [("x", ("val", (TmVar 0 1)))],
                "case (<x=true> as <x:Bool>) of <x=val> ==> val;")
+             ,("inert", TmInert TyBool, "inert[Bool];")
              ]
 
 -- FORMAT: (test name, expected printed output, input)
@@ -155,6 +156,7 @@ evalTests = [("true",  "true : Bool",  "true;")
             ,("unevaled case", 
               "(case <x=true> as <x:Bool, y:Nat, z:Nat> of <y=val> ==> val | <z=w> ==> w) : Nat",
               "case (<x=true> as <x:Bool, y:Nat, z:Nat>) of <y=val> ==> val | <z=w> ==> w;")
+             ,("inert", "inert[Bool] : Bool", "inert[Bool];")
             ]
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval

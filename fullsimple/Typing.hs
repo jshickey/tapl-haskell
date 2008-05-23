@@ -76,6 +76,7 @@ typeof (TmProj r name) = do recordTy <- typeof r
 typeof (TmTag _ _ ty) = return ty
 typeof (TmCase t ((label,_):cs)) = do (TyVariant fs) <- typeof t
                                       accessField label fs
+typeof (TmInert ty) = return ty
 typeof _ = throwError $ Default "Unknown type"
 
 accessField name [] = throwError $ TypeMismatch $ "No field " ++ name

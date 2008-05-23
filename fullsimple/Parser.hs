@@ -39,6 +39,7 @@ lexer = P.makeTokenParser fullSimpleDef
 
 parens        = P.parens        lexer
 braces        = P.braces        lexer
+squares       = P.squares       lexer
 identifier    = P.identifier    lexer
 reserved      = P.reserved      lexer
 symbol        = P.symbol        lexer
@@ -181,6 +182,8 @@ parseVar = do var <- identifier
                         idx <- throwsToParser $ indexOf var ctx
                         return $ TmVar idx (ctxLength ctx)
 
+parseInert = reserved "inert" >> squares (liftM TmInert parseType)
+
 {- ------------------------------
    let/lambda
    ------------------------------ -}
@@ -278,6 +281,7 @@ parseNonApp = parseTrue <|>
               parseRecord <|>
               parseCase <|>
               parseVariant <|>
+              parseInert <|>
               parens parseTerm
 
 -- parses a non-application which could be an ascription
