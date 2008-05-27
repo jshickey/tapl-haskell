@@ -1,20 +1,8 @@
 /* Examples for testing */
 
- lambda x:Bot. x;
- lambda x:Bot. x x; 
-
+  
+ lambda x:<a:Bool,b:Bool>. x;
  
-lambda x:<a:Bool,b:Bool>. x;
-
-
-lambda x:Top. x;
- (lambda x:Top. x) (lambda x:Top. x);
-(lambda x:Top->Top. x) (lambda x:Top. x);
-
-
-(lambda r:{x:Top->Top}. r.x r.x) 
-  {x=lambda z:Top.z, y=lambda z:Top.z}; 
-
 
 "hello";
 
@@ -24,17 +12,12 @@ lambda x:A. x;
 
 let x=true in x;
 
+timesfloat 2.0 3.14159;
+
 {x=true, y=false}; 
 {x=true, y=false}.x;
 {true, false}; 
 {true, false}.1; 
-
-
-if true then {x=true,y=false,a=false} else {y=false,x={},b=false};
-
-timesfloat 2.0 3.14159;
-
-
 
 
 lambda x:Bool. x;

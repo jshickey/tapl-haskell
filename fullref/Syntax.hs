@@ -37,6 +37,10 @@ data Term = TmTrue
           | TmIsZero Term
           | TmInert Ty
           | TmBind String Binding
+          | TmRef Term
+          | TmDeref Term
+          | TmLoc Int
+          | TmAssign Term Term
           deriving (Show, Eq)
 
 isnumericval :: Term -> Bool
@@ -55,6 +59,7 @@ isval (TmAbs _ _ _)      = True
 isval (TmAscribe t _)    = isval t
 isval (TmRecord fs)      = and $ map (\(_,t) -> isval t) fs
 isval (TmTag _ t _)      = isval t
+isval (TmLoc _)          = True
 isval t | isnumericval t = True
         | otherwise      = False
 
@@ -72,6 +77,7 @@ data Ty = TyVar Term -- the Term will always be a TmVar (a hack to reuse TmVar c
         | TyString
         | TyFloat
         | TyNat
+        | TyRef Ty
           deriving (Show, Eq)
 
 {- --------------------------------

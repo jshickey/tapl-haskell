@@ -33,7 +33,7 @@ fullRefDef = LanguageDef
                 , opLetter        = fail "no operators"
                 , reservedOpNames = []
                 , caseSensitive   = True
-                , reservedNames   = ["inert", "true", "false", "if", "then", "else", "Bool", "Nat", "String", "Unit", "Float", "case", "of", "as", "lambda", "let", "in", "fix", "letrec", "timesfloat", "succ", "pred", "iszero", "unit"]
+                , reservedNames   = ["inert", "true", "false", "if", "then", "else", "Bool", "Nat", "String", "Unit", "Float", "case", "of", "as", "lambda", "let", "in", "fix", "letrec", "timesfloat", "succ", "pred", "iszero", "unit", "ref"]
                 }
 
 lexer = P.makeTokenParser fullRefDef
@@ -50,7 +50,7 @@ semi          = P.semi          lexer
 comma         = P.comma         lexer
 colon         = P.colon         lexer
 stringLiteral = P.stringLiteral lexer
-integer       = P.integer       lexer
+natural       = P.natural       lexer
 
 {- ------------------------------
    Parsing Binders
@@ -152,9 +152,11 @@ parseTrue  = reserved "true"  >> return TmTrue
 
 parseFalse = reserved "false" >> return TmFalse
 
-parseZero  = symbol "0"       >> return TmZero
-
 parseUnit  = reserved "unit"  >> return TmUnit
+
+parseNat = liftM numToSucc natural
+    where numToSucc 0 = TmZero
+          numToSucc n = TmSucc $ numToSucc (n - 1)
 
 {- ------------------------------
    Arith Parsers
@@ -258,7 +260,7 @@ parseRecordField = liftM2 (,) parseName parseTerm
 
 parseProj = do t <- parseRecord <|> parens parseTerm
                symbol "."
-               liftM (TmProj t) (identifier <|> (liftM show integer))
+               liftM (TmProj t) (identifier <|> (liftM show natural))
 
 {- ------------------------------
    Variants and Cases
@@ -289,17 +291,25 @@ parseCase = do reserved "case"
                            return (label, (var,t))
 
 {- ------------------------------
+   Refs and Derefs
+   ------------------------------ -}
+
+parseRef = reserved "ref" >> liftM TmRef parseTerm
+
+parseDeref = symbol "!" >> liftM TmDeref parseTerm
+
+{- ------------------------------
    Putting it all together
    ------------------------------ -}
 
 parseNonApp = parseTrue <|>
               parseFalse <|>
-              parseZero <|>
               parseSucc <|>
               parsePred <|>
               parseIsZero <|>
               parseIf <|>
-              parseFloat <|>
+              (try parseFloat) <|>
+              parseNat <|>
               parseTimesFloat <|>
               parseAbs <|>
               parseLet <|>
@@ -314,6 +324,8 @@ parseNonApp = parseTrue <|>
               parseInert <|>
               parseFix <|>
               parseLetrec <|>
+              parseRef <|>
+              parseDeref <|>
               parens parseTerm
 
 -- parses a non-application which could be an ascription

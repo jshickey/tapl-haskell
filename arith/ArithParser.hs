@@ -44,7 +44,9 @@ parseTrue = string "true" >> return TmTrue
 
 parseFalse = string "false" >> return TmFalse
 
-parseZero = string "0" >> return TmZero
+parseNat = liftM (numToSucc . read) $ many1 digit
+    where numToSucc 0 = TmZero
+          numToSucc n = TmSucc $ numToSucc (n - 1)
 
 -- --------------------
 -- One-arg terms
@@ -86,7 +88,7 @@ parseTerm = parseTrue <|>
             parseSucc <|>
             parsePred <|>
             parseIsZero <|>
-            parseZero <|>
+            parseNat <|>
             surroundedBy (char '(') (char ')') parseTerm
 
 termSep = separators >> char ';' >> separators

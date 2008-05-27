@@ -49,7 +49,7 @@ semi          = P.semi          lexer
 comma         = P.comma         lexer
 colon         = P.colon         lexer
 stringLiteral = P.stringLiteral lexer
-integer       = P.integer       lexer
+natural       = P.natural       lexer
 
 {- ------------------------------
    Parsing Binders
@@ -151,9 +151,11 @@ parseTrue  = reserved "true"  >> return TmTrue
 
 parseFalse = reserved "false" >> return TmFalse
 
-parseZero  = symbol "0"       >> return TmZero
-
 parseUnit  = reserved "unit"  >> return TmUnit
+
+parseNat = liftM numToSucc natural
+    where numToSucc 0 = TmZero
+          numToSucc n = TmSucc $ numToSucc (n - 1)
 
 {- ------------------------------
    Arith Parsers
@@ -257,7 +259,7 @@ parseRecordField = liftM2 (,) parseName parseTerm
 
 parseProj = do t <- parseRecord <|> parens parseTerm
                symbol "."
-               liftM (TmProj t) (identifier <|> (liftM show integer))
+               liftM (TmProj t) (identifier <|> (liftM show natural))
 
 {- ------------------------------
    Variants and Cases
@@ -293,13 +295,13 @@ parseCase = do reserved "case"
 
 parseNonApp = parseTrue <|>
               parseFalse <|>
-              parseZero <|>
               parseSucc <|>
               parsePred <|>
               parseIsZero <|>
               parseIf <|>
-              parseFloat <|>
+              (try parseFloat) <|>
               parseTimesFloat <|>
+              parseNat <|>
               parseAbs <|>
               parseLet <|>
               (try parseBinder) <|>

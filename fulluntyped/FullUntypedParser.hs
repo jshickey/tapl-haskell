@@ -42,6 +42,7 @@ identifier = P.identifier lexer
 reserved = P.reserved lexer
 float = P.float lexer
 stringLiteral = P.stringLiteral lexer
+natural = P.natural lexer
 
 -- --------------------
 -- Zero-arg arith terms
@@ -50,7 +51,9 @@ parseTrue = reserved "true" >> return TmTrue
 
 parseFalse = reserved "false" >> return TmFalse
 
-parseZero = symbol "0" >> return TmZero
+parseNat = liftM numToSucc natural
+    where numToSucc 0 = TmZero
+          numToSucc n = TmSucc $ numToSucc (n - 1)
 
 -- --------------------
 -- One-arg arith terms
@@ -81,7 +84,7 @@ parseArithTerm = parseTrue <|>
                  parseSucc <|>
                  parsePred <|>
                  parseIsZero <|>
-                 try parseZero
+                 try parseNat
 
 -- binds a variable into the context
 binder = do var <- identifier
@@ -162,10 +165,10 @@ parseRecord = braces $ liftM TmRecord $ fields 1
 parseNonApp = try binder
             <|> untypedVar
             <|> untypedAbs
+            <|> (try parseFloat)
+            <|> parseTimesfloat
             <|> parseArithTerm
             <|> parseLet
-            <|> parseFloat
-            <|> parseTimesfloat
             <|> parseString
             <|> try parseProj
             <|> parseRecord
