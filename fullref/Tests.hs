@@ -11,16 +11,16 @@ import Evaluator
 import TaplError
 import Parser
 
--- most of the tests have been moved up into FullSimpleTests
+-- A lot of the tests are inherited from FullSimpleTests.  The ones 
+-- specifically for references are listed below.
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                  return $ TestList $ concat
-                        [ map (makeParseTest parseFullSimple) F.parseTests
+                        [ map (makeParseTest parseFullRef)    F.parseTests
                         , map (makeEvalTest  parseAndEval)    F.evalTests
                         , map (makeEvalTest  parseAndEval)    tyarithEvalTests
-                        , [testDotFTest]
+-- TODO                        , [testDotFTest]
                         ]
                          
-
 main :: IO ()
 main = getAllTests >>= runTests

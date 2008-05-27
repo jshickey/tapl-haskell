@@ -1,0 +1,14 @@
+Haskell port of the fullref OCaml implementation of TAPL, which is described in Chapter 12
+
+SAMPLE USAGE:
+
+> make test
+
+> make
+> ./f test.f
+
+See the Makefile for all targets.
+
+NOTES:
+
+Formatting changes have been made to test.out, which was originally constructed as the output of calling the OCaml implementation on test.f.
