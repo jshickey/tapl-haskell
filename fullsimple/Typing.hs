@@ -3,7 +3,7 @@
 module Typing where
 
 import Syntax
-import Context
+import SimpleContext
 import TaplError
 import Control.Monad
 import Control.Monad.Error

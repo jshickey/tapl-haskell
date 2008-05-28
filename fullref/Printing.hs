@@ -1,7 +1,8 @@
 module Printing ( showTerms ) where
 
 import Syntax
-import Context
+import Store
+import SimpleContext
 import Typing
 import TaplError
 import Control.Monad
@@ -37,6 +38,7 @@ showType (TyVariant (f:fs)) = tell "<" >> showField f >>
                               tell ">"
     where showField (n,ty) = tell (n ++ ":") >> showType ty
 showType (TyVar (TmVar idx ctxLen)) = showVar idx ctxLen
+showType (TyRef ty) = tell "Ref " >> showType ty
 
 {- --------------------------------
    Printing a single Term
@@ -62,26 +64,26 @@ showTerm (TmIf t1 t2 t3) = tell "if "   >> showTerm t1 >>
                            tell "then " >> showTerm t2 >>
                            tell "else " >> showTerm t3
 showTerm (TmAscribe t ty) = showTerm t >> tell " as " >> showType ty
-showTerm (TmBind var binding) = modify (appendBinding var binding) >> 
+showTerm (TmBind var binding) = lift2 (modify (appendBinding var binding)) >> 
                                 case binding of
                                   TyAbbBind _ -> tell $ var ++ " :: *"
                                   otherwise   -> tell var
 showTerm (TmVar idx ctxLen) = showVar idx ctxLen
 showTerm (TmAbs var ty body)
-    = do ctx <- get
+    = do ctx <- lift2 get
          let name = pickFreshName var ctx
          tell $ "(lambda " ++ name ++ ":"
          showType ty
          tell ". "
-         withBinding name (VarBind ty) $ showTerm body
+         withBindingUnderPrinter name (VarBind ty) $ showTerm body
          tell ")"
 showTerm (TmLet var t body)
-    = do ctx <- get
+    = do ctx <- lift2 get
          let name = pickFreshName var ctx
          tell $ "let " ++ name ++ " = "
          showTerm t
          tell " in "
-         withBinding name NameBind $ showTerm body
+         withBindingUnderPrinter name NameBind $ showTerm body
 showTerm (TmApp t1 t2) = case t2 of
                            TmApp _ _ -> showTerm t1 >> tell " (" >> 
                                         showTerm t2 >> tell ")"
@@ -99,7 +101,7 @@ showTerm (TmCase t (c:cs)) = tell "(case " >> showTerm t >> tell " of " >>
           showBranch (label, (var, term)) 
               = do tell ("<" ++ label ++ "=" ++
                          var ++ "> ==> ")
-                   withBinding var NameBind $ showTerm term
+                   withBindingUnderPrinter var NameBind $ showTerm term
 showTerm (TmTag var t ty) = tell ("<" ++ var ++ "=") >>
                             showTerm t >>
                             tell "> as " >>
@@ -139,17 +141,17 @@ showOneArg name t = tell "(" >> tell name >> tell " " >>
 --    (2) a Context (the state)
 --    (3) the possibility of errors (ThrowsError)
 
-type Printer = WriterT String ContextThrowsError
+type Printer = WriterT String StoreContextThrows
 
 runPrinter :: Printer () -> ThrowsError String
-runPrinter = runContextThrows . execWriterT 
+runPrinter = runStoreContextThrows . execWriterT 
 
 liftThrowsToPrinter :: ThrowsError a -> Printer a
-liftThrowsToPrinter = lift . liftThrows
+liftThrowsToPrinter = lift2 . liftThrows
 
 -- for printing the name of a TyVar or a TmVar
 showVar :: Int -> Int -> Printer ()
-showVar idx ctxLen = do ctx <- get
+showVar idx ctxLen = do ctx <- lift2 get
                         if ctxLength ctx == ctxLen
                           then do name <- liftThrowsToPrinter $ nameOf idx ctx
                                   tell name
@@ -157,3 +159,11 @@ showVar idx ctxLen = do ctx <- get
 
 isnumber :: String -> Bool                               
 isnumber n = elem n $ map show [0..9]
+
+withBindingUnderPrinter var b action = do ctx <- lift2 get
+                                          lift2 $ put $ appendBinding var b ctx
+                                          result <- action
+                                          lift2 $ put ctx
+                                          return result
+
+lift2 = lift . lift

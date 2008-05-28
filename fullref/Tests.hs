@@ -19,17 +19,15 @@ fullRefParseTests
       , ("deref", TmDeref (TmRef TmZero), "! (ref 0);")
       ]
 
-
 fullRefEvalTests 
-    = [ ("ref", "5 : Ref Nat", "x = ref 5;")
-      , ("loc", "<loc #2> : Ref Nat", "ref 5;")
+    = [ ("ref", "x : Ref Nat", "x = ref 5;")
       , ("deref ref", "4 : Nat", "! (ref 4);")
       , ("deref", "x : Ref Nat\n5 : Nat", "x = ref 5; !x;")
       , ("multiple refs", "x : Ref Nat\ny : Ref Nat\n5 : Nat\n8 : Nat",
-         "x = ref 5; y = ref 8; !x; !y")
+         "x = ref 5; y = ref 8; !x; !y;")
       , ("change ref", "x : Ref Nat\nunit : Unit\n8 : Nat\n",
-         "x = ref 5; x := 8; !x")
-      , ("shared state", "x: Ref Nat\ny : Ref Nat\nunit : Unit\n6 : Nat",
+         "x = ref 5; x := 8; !x;")
+      , ("shared state", "x : Ref Nat\ny : Ref Nat\nunit : Unit\n6 : Nat",
          "x = ref 5; y = x; x := 6; !y;")
       ]
 
@@ -38,7 +36,7 @@ getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                         [ map (makeParseTest parseFullRef)    F.parseTests
                         , map (makeEvalTest  parseAndEval)    F.evalTests
                         , map (makeParseTest parseFullRef)    fullRefParseTests
-                --todo        , map (makeEvalTest  parseAndEval)    fullRefEvalTests
+                        , map (makeEvalTest  parseAndEval)    fullRefEvalTests
                         , map (makeEvalTest  parseAndEval)    tyarithEvalTests
                         , [testDotFTest]
                         ]

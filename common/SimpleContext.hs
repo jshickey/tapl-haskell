@@ -1,9 +1,11 @@
-{- A Context record the lexically-bound variables.
+{- A context records the lexically-bound variables.  This SimpleContext
+   module is used by the fullsimple implementation, and others based on it.
+
    de Bruijn indexes are used, as described in Chapter 6.
    Each element of the context record both the name of the variable,
    and the binding.
  -}
-module Context where
+module SimpleContext where
 
 import Syntax
 import TaplError

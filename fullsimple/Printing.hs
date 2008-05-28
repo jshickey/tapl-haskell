@@ -1,7 +1,7 @@
 module Printing ( showTerms ) where
 
 import Syntax
-import Context
+import SimpleContext
 import Typing
 import TaplError
 import Control.Monad

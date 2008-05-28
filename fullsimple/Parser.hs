@@ -15,7 +15,7 @@ import Data.Char
 import Syntax
 import Typing
 import TaplError
-import Context
+import SimpleContext
 
 {- ------------------------------
    Lexer, making use of the Parsec.Token and Language
@@ -327,7 +327,7 @@ parseNonAppOrAscribe = do t <- parseNonApp
 -- For non-applications, we don't need to deal with associativity,
 -- but we need to special handling (in the form of 'chainl1' here)
 -- so that we enforce left-associativity as we aggregate a list of terms
-parseTerm = chainl1 parseNonApp $ return TmApp
+parseTerm = chainl1 parseNonAppOrAscribe $ return TmApp
 
 parseTerms = do whiteSpace -- lexer handles whitespace everywhere except here
                 ts <- endBy1 parseTerm semi

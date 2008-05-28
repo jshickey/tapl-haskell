@@ -14,9 +14,10 @@ import Control.Monad.State
 import Data.Char
 
 import Syntax
+import Store
 import Typing
 import TaplError
-import Context
+import SimpleContext
 
 {- ------------------------------
    Lexer, making use of the Parsec.Token and Language
@@ -93,10 +94,10 @@ parseAbbBind forLetrec
                               ty <- parseType
                               return $ TyAbbBind ty
           getType t      = do ctx <- getState
-                              case evalState (runErrorT (typeof t)) ctx of
+                              case getThrowsType t ctx of
                                 Left err -> return Nothing
                                 Right ty -> return $ Just ty
-
+          getThrowsType t = evalState (runErrorT (evalStateT (typeof t) newStore))
 parseBinder = (try parseVarBind) <|> (parseAbbBind False)
 
 {- ------------------------------
@@ -328,17 +329,21 @@ parseNonApp = parseTrue <|>
               parseDeref <|>
               parens parseTerm
 
--- parses a non-application which could be an ascription
--- (the non-application parsing is left-factored)
-parseNonAppOrAscribe = do t <- parseNonApp
-                          (do reserved "as"
-                              ty <- parseType
-                              return $ TmAscribe t ty) <|> return t
+-- parses a non-application which could be the beginning
+-- of a more complicated term (the non-application parsing is left-factored)
+parseLeadingNonApp = do t <- parseNonApp
+                        (do reserved "as"
+                            ty <- parseType
+                            return $ TmAscribe t ty)
+                          <|> (do symbol ":="
+                                  t2 <- parseTerm
+                                  return $ TmAssign t t2)
+                          <|> return t
 
 -- For non-applications, we don't need to deal with associativity,
 -- but we need to special handling (in the form of 'chainl1' here)
 -- so that we enforce left-associativity as we aggregate a list of terms
-parseTerm = chainl1 parseNonApp $ return TmApp
+parseTerm = chainl1 parseLeadingNonApp $ return TmApp
 
 parseTerms = do whiteSpace -- lexer handles whitespace everywhere except here
                 ts <- endBy1 parseTerm semi

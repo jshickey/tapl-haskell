@@ -7,7 +7,8 @@ import Control.Monad.State
 import Control.Monad.Error
 
 import Syntax
-import Context
+import SimpleContext
+import Store
 import Typing
 import Parser
 import TaplError
@@ -48,6 +49,9 @@ walk c t f = case t of
                TmTag v t ty -> TmTag v (walk c t f) (walkType c ty f)
                TmInert ty -> TmInert $ walkType c ty f
                TmFix t -> TmFix $ walk c t f
+               TmRef t -> TmRef $ walk c t f
+               TmDeref t -> TmDeref $ walk c t f
+               TmAssign t1 t2 -> TmAssign (walk c t1 f) (walk c t2 f)
                otherwise -> t
 
 walkType c ty f = case ty of
@@ -56,6 +60,7 @@ walkType c ty f = case ty of
                                      (walkType c ty2 f)
                     TyRecord  fields -> TyRecord  $ walkFields fields
                     TyVariant fields -> TyVariant $ walkFields fields
+                    TyRef ty -> TyRef $ walkType c ty f
                     otherwise -> ty
     where walkFields = map (\(n,ty) -> (n, walkType c ty f))
 
@@ -63,19 +68,19 @@ walkType c ty f = case ty of
  eval1 helper functions
  --------------------------------- -}
 
-eval1Cons :: (Term -> Term) -> Term -> ContextThrowsError (Maybe Term)
+eval1Cons :: (Term -> Term) -> Term -> StoreContextThrows (Maybe Term)
 eval1Cons constructor = (liftM (liftM constructor)) . eval1
 
 apply term body = shift (-1) $ sub 0 (shift 1 term) body
 
 {- ---------------------------------
  eval1, which executes a single "small step".  Use the Monad Transformer
- ContextThrowsError to implicitly pass around the context during the 
+ StoreContextThrows to implicitly pass around the context and store during the 
  evaluation.  Return a "Maybe Term", with "Nothing" indicating that
  the input term could not be further reduced.
  --------------------------------- -}
 
-eval1 :: Term -> ContextThrowsError (Maybe Term)
+eval1 :: Term -> StoreContextThrows (Maybe Term)
 eval1 (TmSucc t)   | isval t   = return Nothing
                    | otherwise = eval1Cons TmSucc t
 eval1 (TmPred TmZero)          = return $ Just TmZero
@@ -97,10 +102,12 @@ eval1 (TmTimesFloat t1@(TmFloat _) t2)
 eval1 (TmTimesFloat t1 t2) 
     | not $ isval t1 = eval1Cons ((flip TmTimesFloat) t2) t1
 eval1 (TmAscribe t _) = return $ Just t
-eval1 t@(TmBind var binding) = modify (appendBinding var binding) >>
+eval1 (TmBind var (TmAbbBind t mty)) 
+    | not $ isval t = eval1Cons (\t' -> TmBind var (TmAbbBind t' mty)) t
+eval1 t@(TmBind var binding) = lift (modify (appendBinding var binding)) >>
                                return Nothing
-eval1 (TmVar idx ctxLen) = do ctx <- get
-                              binding <- liftThrows $ bindingOf idx ctx 
+eval1 (TmVar idx ctxLen) = do ctx <- lift get
+                              binding <- liftThrowsToStore $ bindingOf idx ctx 
                               case binding of
                                 TmAbbBind val _ -> return $ Just val
                                 otherwise       -> return Nothing
@@ -111,7 +118,7 @@ eval1 (TmApp t1 t2) | not $ isval t1 = eval1Cons ((flip TmApp) t2) t1
 eval1 (TmLet var t body) | isval t   = return $ Just $ apply t body
                          | otherwise = eval1Cons (\t' -> TmLet var t' body) t
 eval1 (TmRecord fs) = liftM (liftM TmRecord) $ iter fs
-    where iter :: [(String,Term)] -> ContextThrowsError (Maybe [(String,Term)])
+    where iter :: [(String,Term)] -> StoreContextThrows (Maybe [(String,Term)])
           iter [] = return Nothing
           iter ((n,t):fs) | isval t   = liftM (liftM ((n,t): )) $ iter fs
                           | otherwise = liftM (liftM (\t' -> ((n,t'):fs))) $ eval1 t
@@ -133,20 +140,36 @@ eval1 (TmTag var t ty) | isval t   = return Nothing
                        | otherwise = eval1Cons (\t' -> TmTag var t' ty) t
 eval1 (TmFix t) | not $ isval t     = eval1Cons TmFix t
 eval1 t@(TmFix (TmAbs var ty body)) = return $ Just $ apply t body
+eval1 (TmRef t) | isval t   = do s <- get
+                                 ty <- typeof t
+                                 let (loc, s') = storeRef s t ty
+                                 put s'
+                                 return $ Just loc
+                | otherwise = eval1Cons TmRef t
+eval1 (TmDeref (TmLoc idx)) = do s <- get
+                                 t <- liftThrowsToStore $ derefTerm s idx
+                                 return $ Just t
+eval1 (TmDeref t) | not $ isval t = eval1Cons TmDeref t
+eval1 (TmAssign t1 t2) | not $ isval t1 = eval1Cons ((flip TmAssign) t2) t1
+                       | not $ isval t2 = eval1Cons (TmAssign t1) t2
+eval1 (TmAssign (TmLoc idx) v) = do s <- get
+                                    s' <- liftThrowsToStore $ assignRef s idx v
+                                    put s'
+                                    return $ Just TmUnit
 eval1 _ = return Nothing
 
 {- ---------------------------------
  Full evaluation
  --------------------------------- -}
 
-eval :: Term -> ContextThrowsError Term
+eval :: Term -> StoreContextThrows Term
 eval t = do mt' <- eval1 t
             case mt' of
               Nothing -> return t
               Just t' -> eval t'           
 
 evalTerms :: [Term] -> ThrowsError [Term]
-evalTerms ts = runContextThrows $ mapM eval ts
+evalTerms ts = runStoreContextThrows $ mapM eval ts
 
 parseAndEval :: String -> ThrowsError String
 parseAndEval str = parseFullRef str >>= evalTerms >>= showTerms

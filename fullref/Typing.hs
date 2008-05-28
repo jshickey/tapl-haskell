@@ -3,7 +3,8 @@
 module Typing where
 
 import Syntax
-import Context
+import SimpleContext
+import Store
 import TaplError
 import Control.Monad
 import Control.Monad.Error
@@ -15,7 +16,7 @@ expectedBool = TypeMismatch "The conditional of an if-statement must be a Bool"
 ifMismatch = TypeMismatch "Predicate and alternative of an if-statement must be of the same type"
 projError = TypeMismatch "A projection can only be applied to a record"
 
-checkType :: Term -> Ty -> Ty -> ContextThrowsError Ty
+checkType :: Term -> Ty -> Ty -> StoreContextThrows Ty
 checkType t expected output
     = do tyT <- typeof t
          if tyT == expected
@@ -27,7 +28,7 @@ checkType t expected output
    typeof
  ------------------------------------- -}
 
-typeof :: Term -> ContextThrowsError Ty
+typeof :: Term -> StoreContextThrows Ty
 typeof TmTrue  = return TyBool
 typeof TmFalse = return TyBool
 typeof TmZero  = return TyNat
@@ -47,15 +48,15 @@ typeof (TmIf p c a) = do tyP <- typeof p
                                    if tyC == tyA
                                      then return tyC
                                      else throwError ifMismatch
-typeof (TmBind _ b) = liftThrows $ typeOfBinding b
+typeof (TmBind _ b) = liftThrowsToStore $ typeOfBinding b
 typeof (TmAscribe t ty) = checkType t ty ty
-typeof (TmVar idx _) = do ctx <- get
-                          b <- liftThrows $ bindingOf idx ctx
-                          liftThrows $ typeOfBinding b
-typeof (TmAbs var ty body) = withBinding var (VarBind ty) $ 
+typeof (TmVar idx _) = do ctx <- lift get
+                          b <- liftThrowsToStore $ bindingOf idx ctx
+                          liftThrowsToStore $ typeOfBinding b
+typeof (TmAbs var ty body) = withBindingUnderStore var (VarBind ty) $ 
                              liftM (TyArr ty) $ typeof body 
 typeof (TmLet var t body)  = do ty <- typeof t
-                                withBinding var (VarBind ty) $ typeof body
+                                withBindingUnderStore var (VarBind ty) $ typeof body
 typeof (TmApp t1 t2) 
     = do tyT1 <- typeof t1
          tyT2 <- typeof t2
@@ -81,7 +82,17 @@ typeof (TmFix t) = do ty <- typeof t
                       case ty of
                         TyArr t1 t2 | t1 == t2 -> return t1
                         otherwise -> throwError $ TypeMismatch "bad fix type"
-typeof _ = throwError $ Default "Unknown type"
+typeof (TmRef t) = do s <- get
+                      ty <- typeof t
+                      let (_,s') = storeRef s t ty
+                      put s'
+                      return $ TyRef ty
+typeof (TmDeref t) = do refTy <- typeof t
+                        case refTy of
+                          TyRef ty -> return ty
+                          otherwise -> throwError $ TypeMismatch "deref of non-ref"
+typeof (TmAssign _ _) = return TyUnit
+typeof ty = throwError $ Default $ "Unknown type: " ++ show ty
 
 accessField name [] = throwError $ TypeMismatch $ "No field " ++ name
 accessField name ((n,t):fs) | n == name = return t

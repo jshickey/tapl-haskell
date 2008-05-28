@@ -7,7 +7,7 @@ import Control.Monad.State
 import Control.Monad.Error
 
 import Syntax
-import Context
+import SimpleContext
 import Typing
 import Parser
 import TaplError

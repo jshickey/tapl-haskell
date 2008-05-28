@@ -16,6 +16,7 @@ parseTests = [("comments", TmTrue, "/**** comment *****/true /* another*//**/;")
              ,("0",     TmZero,  "0;")
              ,("VarBind to type", TmBind "x" (VarBind TyBool), "x : Bool;")
              ,("lambda", TmAbs "x" TyBool (TmVar 0 1), "(lambda x:Bool. x);")
+             ,("ascription", TmAscribe TmTrue TyBool, "true as Bool;")
              ,("nested lambda 1", 
                TmAbs "x" TyBool (TmAbs "y" TyNat (TmVar 0 2)),
                "(lambda x:Bool. (lambda y:Nat. y));")
@@ -74,6 +75,7 @@ evalTests = [("true",  "true : Bool",  "true;")
             ,("false", "false : Bool", "false;")
             ,("0",     "0 : Nat",      "0;")
             ,("varbind to type", "x : Bool\nx : Bool", "x : Bool; x;")
+            ,("ascription", "true : Bool", "true as Bool;")
             ,("multiple varbinds to type",
               "x : Bool\nx : Bool\ny : Nat\nx : Bool\ny : Nat",
               "x : Bool; x;y : Nat; x; y;")
