@@ -1,0 +1,10 @@
+Haskell port of the fullerror OCaml implementation of TAPL, which is described in Chapter 13.
+
+SAMPLE USAGE:
+
+> make test
+
+> make
+> ./f test.f
+
+See the Makefile for all targets.
