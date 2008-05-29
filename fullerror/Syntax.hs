@@ -37,6 +37,8 @@ data Term = TmTrue
           | TmIsZero Term
           | TmInert Ty
           | TmBind String Binding
+          | TmError Ty -- contains the current type, which could be raised
+          | TmTry Term Term
           deriving (Show, Eq)
 
 isnumericval :: Term -> Bool
@@ -72,6 +74,7 @@ data Ty = TyVar Term -- the Term will always be a TmVar (a hack to reuse TmVar c
         | TyString
         | TyFloat
         | TyNat
+        | TyBot
           deriving (Show, Eq)
 
 {- --------------------------------

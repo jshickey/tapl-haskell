@@ -37,6 +37,7 @@ showType (TyVariant (f:fs)) = tell "<" >> showField f >>
                               tell ">"
     where showField (n,ty) = tell (n ++ ":") >> showType ty
 showType (TyVar (TmVar idx ctxLen)) = showVar idx ctxLen
+showType TyBot = tell "Bot"
 
 {- --------------------------------
    Printing a single Term
@@ -106,6 +107,9 @@ showTerm (TmTag var t ty) = tell ("<" ++ var ++ "=") >>
                             showType ty
 showTerm (TmProj t name) = showTerm t >> tell ("." ++ name)
 showTerm (TmInert ty) = tell "inert[" >> showType ty >> tell "]"
+showTerm (TmError _) = tell "error"
+showTerm (TmTry t1 t2) = tell "try " >> showTerm t1 >>
+                         tell " with " >> showTerm t2
 showTerm t = tell $ show t
 
 {- --------------------------------

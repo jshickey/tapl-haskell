@@ -8,3 +8,7 @@ SAMPLE USAGE:
 > ./f test.f
 
 See the Makefile for all targets.
+
+NOTE:
+
+test.f is copied from the OCaml implementation, but lines involving Top were removed, since they have not yet been covered, as of Chapter 14.

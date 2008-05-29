@@ -48,6 +48,7 @@ walk c t f = case t of
                TmTag v t ty -> TmTag v (walk c t f) (walkType c ty f)
                TmInert ty -> TmInert $ walkType c ty f
                TmFix t -> TmFix $ walk c t f
+               TmTry t1 t2 -> TmTry (walk c t1 f) (walk c t2 f)
                otherwise -> t
 
 walkType c ty f = case ty of
@@ -76,20 +77,27 @@ apply term body = shift (-1) $ sub 0 (shift 1 term) body
  --------------------------------- -}
 
 eval1 :: Term -> ContextThrowsError (Maybe Term)
+eval1 (TmSucc (TmError _))     = return $ Just $ TmError TyNat
 eval1 (TmSucc t)   | isval t   = return Nothing
                    | otherwise = eval1Cons TmSucc t
+eval1 (TmPred (TmError _))     = return $ Just $ TmError TyNat
 eval1 (TmPred TmZero)          = return $ Just TmZero
 eval1 (TmPred (TmSucc t)) 
     | isnumericval t           = return $ Just t
 eval1 (TmPred t)   | isval t   = return Nothing
                    | otherwise = eval1Cons TmPred t
+eval1 (TmIsZero (TmError _))   = return $ Just $ TmError TyBool
 eval1 (TmIsZero TmZero)        = return $ Just TmTrue
 eval1 (TmIsZero t) | isval t   = return $ Just TmFalse
                    | otherwise = eval1Cons TmIsZero t
+eval1 (TmIf (TmError _) c _)   = do ty <- typeof c
+                                    return $ Just $ TmError ty
 eval1 (TmIf TmTrue  c a)       = return $ Just c
 eval1 (TmIf TmFalse c a)       = return $ Just a
 eval1 (TmIf p c a) | isval p   = return Nothing 
                    | otherwise = eval1Cons (\p' -> TmIf p' c a) p
+eval1 (TmTimesFloat (TmError _) _) = return $ Just $ TmError TyFloat
+eval1 (TmTimesFloat _ (TmError _)) = return $ Just $ TmError TyFloat
 eval1 (TmTimesFloat (TmFloat f1) (TmFloat f2))
                      = return $ Just $ TmFloat $ f1 * f2
 eval1 (TmTimesFloat t1@(TmFloat _) t2) 
@@ -104,6 +112,9 @@ eval1 (TmVar idx ctxLen) = do ctx <- get
                               case binding of
                                 TmAbbBind val _ -> return $ Just val
                                 otherwise       -> return Nothing
+eval1 (TmApp e@(TmError ty) t2) = return $ Just e
+eval1 (TmApp t1 (TmError _)) = do (TyArr _ tyT2) <- typeof t1
+                                  return $ Just $ TmError tyT2
 eval1 (TmApp t1@(TmAbs _ _ body) t2) 
     | isval t2  = return $ Just $ apply t2 body
     | otherwise = eval1Cons (TmApp t1) t2
@@ -133,6 +144,9 @@ eval1 (TmTag var t ty) | isval t   = return Nothing
                        | otherwise = eval1Cons (\t' -> TmTag var t' ty) t
 eval1 (TmFix t) | not $ isval t     = eval1Cons TmFix t
 eval1 t@(TmFix (TmAbs var ty body)) = return $ Just $ apply t body
+eval1 (TmTry (TmError _) t2)        = return $ Just t2
+eval1 (TmTry t1 t2) | isval t1  = return $ Just t1
+                    | otherwise = eval1Cons ((flip TmTry) t2) t1
 eval1 _ = return Nothing
 
 {- ---------------------------------

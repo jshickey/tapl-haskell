@@ -62,6 +62,7 @@ typeof (TmApp t1 t2)
          case tyT1 of
            (TyArr _ _) -> checkTyArr tyT1 tyT2
            (TyVar _)   -> return tyT2
+           TyBot       -> return tyT2
            otherwise -> throwError notAbstraction
     where checkTyArr (TyArr tyArr1 tyArr2) tyT2
               | tyArr1 == tyT2 = return tyArr2
@@ -81,6 +82,9 @@ typeof (TmFix t) = do ty <- typeof t
                       case ty of
                         TyArr t1 t2 | t1 == t2 -> return t1
                         otherwise -> throwError $ TypeMismatch "bad fix type"
+typeof (TmError ty) = return ty
+typeof (TmTry t1 t2) = do tyT1 <- typeof t1
+                          checkType t2 tyT1 tyT1
 typeof _ = throwError $ Default "Unknown type"
 
 accessField name [] = throwError $ TypeMismatch $ "No field " ++ name

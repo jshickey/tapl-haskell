@@ -32,7 +32,7 @@ fullErrorDef = LanguageDef
                 , opLetter        = fail "no operators"
                 , reservedOpNames = []
                 , caseSensitive   = True
-                , reservedNames   = ["inert", "true", "false", "if", "then", "else", "Bool", "Nat", "String", "Unit", "Float", "case", "of", "as", "lambda", "let", "in", "fix", "letrec", "timesfloat", "succ", "pred", "iszero", "unit"]
+                , reservedNames   = ["inert", "true", "false", "if", "then", "else", "Bool", "Nat", "String", "Unit", "Float", "case", "of", "as", "lambda", "let", "in", "fix", "letrec", "timesfloat", "succ", "pred", "iszero", "unit", "try", "with", "error", "Bot"]
                 }
 
 lexer = P.makeTokenParser fullErrorDef
@@ -112,6 +112,8 @@ parseTypeUnit   = reserved "Unit"   >> return TyUnit
 
 parseTypeString = reserved "String" >> return TyString
 
+parseTypeBot    = reserved "Bot"    >> return TyBot
+
 parseNamedType  = do ty <- identifier
                      if isUpper $ ty !! 0
                        then makeNamedType ty
@@ -137,6 +139,7 @@ parseTypeArr = parseTypeBool   <|>
                parseTypeFloat  <|>
                parseTypeUnit   <|>
                parseTypeString <|>
+               parseTypeBot    <|>
                parseNamedType  <|>
                parseVariantType  <|>
                braces parseType
@@ -290,6 +293,17 @@ parseCase = do reserved "case"
                            return (label, (var,t))
 
 {- ------------------------------
+   Exceptions
+   ------------------------------ -}
+
+parseError = reserved "error" >> return (TmError TyBot)
+
+parseTryWith = do reserved "try"
+                  t1 <- parseTerm
+                  reserved "with"
+                  liftM (TmTry t1) parseTerm
+
+{- ------------------------------
    Putting it all together
    ------------------------------ -}
 
@@ -315,6 +329,8 @@ parseNonApp = parseTrue <|>
               parseInert <|>
               parseFix <|>
               parseLetrec <|>
+              parseError <|>
+              parseTryWith <|>
               parens parseTerm
 
 -- parses a non-application which could be an ascription
