@@ -139,7 +139,7 @@ parseTypeArr = parseTypeBool   <|>
                parseTypeString <|>
                parseNamedType  <|>
                parseVariantType  <|>
-               braces parseType
+               parens parseType
 
 parseType = parseTypeArr `chainr1` (symbol "->" >> return TyArr)
 

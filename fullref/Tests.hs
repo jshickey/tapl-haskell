@@ -5,6 +5,7 @@ import HUnit
 
 import ArithTests
 import qualified FullSimpleTests as F
+import qualified SubtypeTests as ST
 import Syntax
 import TestUtils
 import Evaluator
@@ -38,6 +39,7 @@ getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                         , map (makeParseTest parseFullRef)    fullRefParseTests
                         , map (makeEvalTest  parseAndEval)    fullRefEvalTests
                         , map (makeEvalTest  parseAndEval)    tyarithEvalTests
+                        , map (makeEvalTest  parseAndEval)    ST.fullsubEvalTests
                         , [testDotFTest]
                         ]
                          

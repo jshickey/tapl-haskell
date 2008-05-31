@@ -4,7 +4,7 @@
 #                (this is "make test" in the ocaml implementation)
 #   make clean   to remove all intermediate and temporary files
 
-FILES =  Typing.hs ../fullsimple/nontyping/Syntax.hs ../fullsimple/nontyping/Printing.hs ../fullsimple/nontyping/Parser.hs ../fullsimple/nontyping/Evaluator.hs ../common/TaplError.hs ../common/Util.hs ../common/TestUtils.hs ../common/ArithTests.hs ../common/FullSimpleTests.hs ../common/SimpleContext.hs
+FILES =  Typing.hs ../fullsimple/nontyping/Syntax.hs ../fullsimple/nontyping/Printing.hs ../fullsimple/nontyping/Parser.hs ../fullsimple/nontyping/Evaluator.hs ../common/TaplError.hs ../common/Util.hs ../common/TestUtils.hs ../common/ArithTests.hs ../common/FullSimpleTests.hs ../common/SimpleContext.hs ../common/SubtypeTests.hs
 
 INCLUDE = -i../common -i../common/HUnit-1.0 -i../fullsimple/nontyping
 
