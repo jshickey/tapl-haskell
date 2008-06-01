@@ -19,6 +19,8 @@ showType TyNat              = tell "Nat"
 showType TyUnit             = tell "Unit"
 showType TyString           = tell "String"
 showType TyFloat            = tell "Float"
+showType TyTop              = tell "Top"
+showType TyBot              = tell "Bot"
 showType (TyArr ty1 ty2)    = case ty1 of
                                 TyArr _ _ -> tell "(" >> showType ty1 >>
                                              tell ") -> " >> showType ty2
@@ -112,17 +114,18 @@ showTerm t = tell $ show t
    Printing a list of Terms
    -------------------------------- -}
 
-showTerms :: [Term] -> ThrowsError String
-showTerms = runPrinter . mapM_ showLine 
-    where showLine t = showTerm t >> 
-                       showTypeOfTerm t >>
-                       tell "\n"
+showTerms :: [Term] -> [Ty] -> ThrowsError String
+showTerms ts = runPrinter . mapM_ showLine . zip ts
+    where showLine (t,ty) = showTerm t >> 
+                            showTypeOfTerm t ty >>
+                            tell "\n"
 
-showTypeOfTerm :: Term -> Printer ()
-showTypeOfTerm (TmBind _ (TyAbbBind _)) = return () 
-showTypeOfTerm (TmBind var TyVarBind) = return ()
-showTypeOfTerm t = tell " : " >> 
-                   (lift (typeof t) >>= showType)
+-- we need to special handling for binders, but otherwise
+-- we just use the type that was passed in
+showTypeOfTerm :: Term -> Ty -> Printer ()
+showTypeOfTerm (TmBind _ (TyAbbBind _)) _ = return () 
+showTypeOfTerm (TmBind var TyVarBind)   _ = return ()
+showTypeOfTerm _ ty                       = tell " : " >> showType ty
 
 {- --------------------------------
    Helpers

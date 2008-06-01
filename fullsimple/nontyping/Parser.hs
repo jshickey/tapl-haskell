@@ -272,7 +272,10 @@ parseRecordField = liftM2 (,) parseName parseTerm
 
 parseProj = do t <- parseRecord <|> parseVar <|> parens parseTerm
                symbol "."
-               liftM (TmProj t) (identifier <|> (liftM show natural))
+               liftM (TmProj t) parseFieldAccessor
+
+parseFieldAccessor = identifier <|> 
+                     liftM show natural
 
 {- ------------------------------
    Variants and Cases

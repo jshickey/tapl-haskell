@@ -41,7 +41,9 @@ typeof (TmIf p c a) = do tyP <- typeof p
                                    if tyC == tyA
                                      then return tyC
                                      else throwError ifMismatch
-typeof (TmBind _ b) = liftThrows $ typeOfBinding b
+typeof (TmBind v TyVarBind) = return $ TyId v
+typeof (TmBind v b) = do modify $ appendBinding v b
+                         liftThrows $ typeOfBinding b
 typeof (TmAscribe t ty) = checkType t ty ty
 typeof (TmVar idx _) = do ctx <- get
                           b <- liftThrows $ bindingOf idx ctx
@@ -80,6 +82,9 @@ typeof _ = throwError $ Default "Unknown type"
 accessField name [] = throwError $ TypeMismatch $ "No field " ++ name
 accessField name ((n,t):fs) | n == name = return t
                             | otherwise = accessField name fs
+
+typeofTerms :: [Term] -> ThrowsError [Ty]
+typeofTerms = runContextThrows . mapM typeof
 
 {- -------------------------------------
    typeofBinding
