@@ -58,15 +58,12 @@ showTerm (TmProj t name) = showTerm t >> tell ("." ++ name)
    Printing a list of Terms
    -------------------------------- -}
 
-showTerms :: [Term] -> ThrowsError String
-showTerms = runPrinter . mapM_ showLine 
-    where showLine t = showTerm t >> 
-                       showTypeOfTerm t >>
-                       tell "\n"
-
-showTypeOfTerm :: Term -> Printer ()
-showTypeOfTerm t = tell " : " >> 
-                   (lift (typeof t) >>= showType)
+showTerms :: [Term] -> [Ty] -> ThrowsError String
+showTerms ts = runPrinter . mapM_ showLine . zip ts
+    where showLine (t,ty) = showTerm t  >> 
+                            tell " : "  >>
+                            showType ty >>
+                            tell "\n"
 
 {- --------------------------------
    Helpers

@@ -56,7 +56,11 @@ parseTypeTop = reserved "Top" >> return TyTop
 
 parseTypeBot = reserved "Bot" >> return TyBot
 
-parseTypeRecord = fail "TODO"
+parseTypeRecord = braces $ liftM TyRecord $ sepBy parseField comma
+    where parseField = do a <- parseFieldAccessor
+                          symbol ":"
+                          ty <- parseType
+                          return (a,ty)
 
 parseTypeArr = parseTypeTop   <|>
                parseTypeBot    <|>
@@ -111,17 +115,20 @@ parseRecordField = liftM2 (,) parseName parseTerm
     where parseName = (try (do {name <- identifier; symbol "="; return name}))
                       <|> return "-1"
 
-parseProj = do t <- parseRecord <|> parens parseTerm
+parseProj = do t <- parseRecord <|> parseVar <|> parens parseTerm
                symbol "."
-               liftM (TmProj t) (identifier <|> (liftM show natural))
+               liftM (TmProj t) parseFieldAccessor
+
+parseFieldAccessor = identifier <|> 
+                     liftM show natural
 
 {- ------------------------------
    Putting it all together
    ------------------------------ -}
 
 parseNonApp = parseAbs <|>
-              parseVar <|>
               (try parseProj) <|>
+              parseVar <|>
               parseRecord <|>
               parens parseTerm
 

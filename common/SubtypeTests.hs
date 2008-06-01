@@ -27,13 +27,13 @@ botEvalErrorTests =
 
 -- for the rcdsubbot implementation
 rcdsubEvalTests = botEvalTests ++
-    [("type match", "{x=lambda m:Top.m} : {x:Top->Top}",
+    [("type match", "{x=(lambda m:Top. m)} : {x:Top -> Top}",
      "(lambda a:{x:Top->Top}. a) {x=(lambda m:Top. m)};")
-    ,("app subtype", "{x=lambda m:Top.m} : {x:Bot->Top}",
+    ,("app subtype", "{x=(lambda m:Top. m)} : {x:Bot -> Top}",
       "(lambda a:{x:Bot->Top}. a) {x=(lambda m:Top. m)};")
-    ,("width subtype 1", "{x=lambda m:Top.m, y=lambda n:Bot.n} : {x:Bot->Top}",
+    ,("width subtype 1", "{x=(lambda m:Top. m), y=(lambda n:Bot. n)} : {x:Bot -> Top}",
       "(lambda a:{x:Bot->Top}. a) {x=(lambda m:Top. m),y=(lambda n:Bot. n)};")
-    ,("width subtype 2", "{y=lambda n:Bot.n, x=lambda m:Top.m} : {x:Bot->Top}",
+    ,("width subtype 2", "{y=(lambda n:Bot. n), x=(lambda m:Top. m)} : {x:Bot -> Top}",
       "(lambda a:{x:Bot->Top}. a) {y=(lambda n:Bot. n), x=(lambda m:Top. m)};")
     ,("permutation subtype", 
       "(lambda m:Top. m) : Top -> Top",
@@ -60,6 +60,6 @@ fullsubEvalTests
     = rcdsubEvalTests ++
       []
 
-fullsbuEvalErrorTests
+fullsubEvalErrorTests
     = rcdsubEvalErrorTests ++
       []

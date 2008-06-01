@@ -132,11 +132,24 @@ parseVariantType = do symbol "<"
                           ty <- parseType
                           return (var, ty)
 
+parseTypeTop = reserved "Top" >> return TyTop
+
+parseTypeBot = reserved "Bot" >> return TyBot
+
+parseTypeRecord = braces $ liftM TyRecord $ sepBy parseField comma
+    where parseField = do a <- parseFieldAccessor
+                          symbol ":"
+                          ty <- parseType
+                          return (a,ty)
+
 parseTypeArr = parseTypeBool   <|>
                parseTypeNat    <|>
                parseTypeFloat  <|>
                parseTypeUnit   <|>
                parseTypeString <|>
+               parseTypeTop    <|>
+               parseTypeBot    <|>
+               parseTypeRecord <|>
                parseNamedType  <|>
                parseVariantType  <|>
                parens parseType
@@ -257,7 +270,7 @@ parseRecordField = liftM2 (,) parseName parseTerm
     where parseName = (try (do {name <- identifier; symbol "="; return name}))
                       <|> return "-1"
 
-parseProj = do t <- parseRecord <|> parens parseTerm
+parseProj = do t <- parseRecord <|> parseVar <|> parens parseTerm
                symbol "."
                liftM (TmProj t) (identifier <|> (liftM show natural))
 
@@ -304,12 +317,12 @@ parseNonApp = parseTrue <|>
               parseNat <|>
               parseAbs <|>
               parseLet <|>
+              (try parseProj) <|>
+              parseRecord <|>
               (try parseBinder) <|>
               parseVar <|>
               parseUnit <|>
               parseString <|>
-              (try parseProj) <|>
-              parseRecord <|>
               parseCase <|>
               parseVariant <|>
               parseInert <|>

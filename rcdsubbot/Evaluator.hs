@@ -92,4 +92,7 @@ evalTerms :: [Term] -> ThrowsError [Term]
 evalTerms ts = runContextThrows $ mapM eval ts
 
 parseAndEval :: String -> ThrowsError String
-parseAndEval str = parseRcdsub str >>= evalTerms >>= showTerms
+parseAndEval str = do parsed <- parseRcdsub str
+                      evaled <- evalTerms parsed
+                      typed  <- typeofTerms parsed
+                      showTerms evaled typed
