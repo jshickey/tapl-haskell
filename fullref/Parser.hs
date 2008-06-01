@@ -34,7 +34,7 @@ fullRefDef = LanguageDef
                 , opLetter        = fail "no operators"
                 , reservedOpNames = []
                 , caseSensitive   = True
-                , reservedNames   = ["inert", "true", "false", "if", "then", "else", "Bool", "Nat", "String", "Unit", "Float", "case", "of", "as", "lambda", "let", "in", "fix", "letrec", "timesfloat", "succ", "pred", "iszero", "unit", "ref"]
+                , reservedNames   = ["inert", "true", "false", "if", "then", "else", "Bool", "Nat", "String", "Unit", "Float", "case", "of", "as", "lambda", "let", "in", "fix", "letrec", "timesfloat", "succ", "pred", "iszero", "unit", "ref", "Ref", "Top", "Bot"]
                 }
 
 lexer = P.makeTokenParser fullRefDef
@@ -114,6 +114,16 @@ parseTypeUnit   = reserved "Unit"   >> return TyUnit
 
 parseTypeString = reserved "String" >> return TyString
 
+parseTypeTop    = reserved "Top" >> return TyTop
+
+parseTypeBot    = reserved "Bot" >> return TyBot
+
+parseTypeRecord = braces $ liftM TyRecord $ sepBy parseField comma
+    where parseField = do a <- parseFieldAccessor
+                          symbol ":"
+                          ty <- parseType
+                          return (a,ty)
+
 parseNamedType  = do ty <- identifier
                      if isUpper $ ty !! 0
                        then makeNamedType ty
@@ -134,14 +144,20 @@ parseVariantType = do symbol "<"
                           ty <- parseType
                           return (var, ty)
 
+parseTypeRef = reserved "Ref" >> liftM TyRef parseType
+
 parseTypeArr = parseTypeBool   <|>
                parseTypeNat    <|>
                parseTypeFloat  <|>
                parseTypeUnit   <|>
                parseTypeString <|>
                parseNamedType  <|>
+               parseTypeTop    <|>
+               parseTypeBot    <|>
+               parseTypeRecord <|>
+               parseTypeRef    <|>
                parseVariantType  <|>
-               braces parseType
+               parens parseType
 
 parseType = parseTypeArr `chainr1` (symbol "->" >> return TyArr)
 
@@ -259,9 +275,12 @@ parseRecordField = liftM2 (,) parseName parseTerm
     where parseName = (try (do {name <- identifier; symbol "="; return name}))
                       <|> return "-1"
 
-parseProj = do t <- parseRecord <|> parens parseTerm
+parseProj = do t <- parseRecord <|> parseVar <|> parens parseTerm
                symbol "."
-               liftM (TmProj t) (identifier <|> (liftM show natural))
+               liftM (TmProj t) parseFieldAccessor
+
+parseFieldAccessor = identifier <|> 
+                     liftM show natural
 
 {- ------------------------------
    Variants and Cases
@@ -314,12 +333,12 @@ parseNonApp = parseTrue <|>
               parseTimesFloat <|>
               parseAbs <|>
               parseLet <|>
+              (try parseProj) <|>
+              parseRecord <|>
               (try parseBinder) <|>
               parseVar <|>
               parseUnit <|>
               parseString <|>
-              (try parseProj) <|>
-              parseRecord <|>
               parseCase <|>
               parseVariant <|>
               parseInert <|>

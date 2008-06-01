@@ -54,7 +54,6 @@ rcdsubEvalErrorTests = botEvalErrorTests ++
       "(lambda a:{x:Top->Top, z:Bot->Bot}. a.x) {y=(lambda n:Bot. n), x=(lambda m:Top. m)};")
     ]
 
-
 -- for fullref and fullsub, which expand upon rcdsubbot
 fullsubEvalTests
     = rcdsubEvalTests ++
@@ -65,17 +64,15 @@ fullsubEvalTests
       ,("if join 3: join in field", "{x=false} : {x:Top}",
        "if true then {x=false} else {y=true,x=0};")
       ,("if join 4: join lambdas in field", 
-        "{x=false, z=(lambda a:Bot->Top. a)} : {x:Top, z:(Top -> Top) -> Bot -> Top}",
+        "{x=false, z=(lambda a:Bot -> Top. a)} : {x:Top, z:(Top -> Top) -> Bot -> Top}",
        "if true then {x=false,z=(lambda a:Bot->Top. a)} else {z=(lambda b:Top->Top. b),y=true,x=0};")
       ,("ascribe 1", "(lambda x:Bot. x) : Bot -> Top",
        "(lambda x:Bot. x) as Bot->Top;")
       ,("ascribe 2", "(lambda x:Top. x) : Bot -> Top",
        "(lambda x:Top. x) as Bot->Top;")
-      ,("fix 1", "(lambda x:Nat. (fix (lambda f:Nat->Top. (lambda x':Nat. f x'))) x) : Nat -> Top",
-       "fix (lambda f:Nat->Top. (lambda x:Nat. f x));")
-      ,("fix 2", "(lambda x:Nat. x) : Nat -> Nat",
+      ,("fix 1", "(lambda x:Nat. x) : Nat -> Nat",
        "fix (lambda f:Nat->Top. (lambda x:Nat. x));")
-      ,("fix 3", "(lambda x:Top. true) : Top -> Bool",
+      ,("fix 2", "(lambda x:Top. true) : Top -> Bool",
        "fix (lambda f:Nat->Bool. (lambda x:Top. true));")
       ]
 

@@ -38,13 +38,14 @@ typeof (TmIf p c a) = do tyP <- typeof p
                            then throwError expectedBool
                            else do tyC <- typeof c
                                    tyA <- typeof a
-                                   if tyC == tyA
-                                     then return tyC
-                                     else throwError ifMismatch
+                                   return $ joinTypes tyC tyA
 typeof (TmBind v TyVarBind) = return $ TyId v
 typeof (TmBind v b) = do modify $ appendBinding v b
                          liftThrows $ typeOfBinding b
-typeof (TmAscribe t ty) = checkType t ty ty
+typeof (TmAscribe t ty) = do tyT <- typeof t
+                             if subtype tyT ty
+                               then return ty
+                               else throwError ascribeError
 typeof (TmVar idx _) = do ctx <- get
                           b <- liftThrows $ bindingOf idx ctx
                           liftThrows $ typeOfBinding b
@@ -76,8 +77,8 @@ typeof (TmCase t ((label,_):cs)) = do (TyVariant fs) <- typeof t
 typeof (TmInert ty) = return ty
 typeof (TmFix t) = do ty <- typeof t
                       case ty of
-                        TyArr t1 t2 | t1 == t2 -> return t1
-                        otherwise -> throwError $ TypeMismatch "bad fix type"
+                        TyArr t1 t2 | subtype t2 t1 -> return t2
+                        otherwise -> throwError fixError
 typeof _ = throwError $ Default "Unknown type"
 
 accessField name [] = throwError $ TypeMismatch $ "No field " ++ name
@@ -117,3 +118,37 @@ typeOfBinding (VarBind ty) = return ty
 typeOfBinding (TmAbbBind _ (Just ty)) = return ty
 typeOfBinding (TyAbbBind ty) = return ty
 typeOfBinding _ = throwError $ Default "No type information exists"
+
+{- -------------------------------------
+   join/meet
+ ------------------------------------- -}
+
+joinTypes :: Ty -> Ty -> Ty
+joinTypes TyTop _      = TyTop
+joinTypes _     TyTop  = TyTop
+joinTypes TyBot ty     = ty
+joinTypes ty    TyBot  = ty
+joinTypes (TyArr ty11 ty12) (TyArr ty21 ty22) 
+    = TyArr (meetTypes ty11 ty21) (joinTypes ty12 ty22)
+joinTypes (TyRecord fs1) (TyRecord fs2) = TyRecord $ recur fs1
+    where recur [] = []
+          recur ((i,ty1):fs) = case lookup i fs2 of
+                                 Just ty2 -> (i, joinTypes ty1 ty2):(recur fs)
+                                 Nothing  -> recur fs
+joinTypes ty1 ty2 | ty1 == ty2 = ty1
+                  | otherwise  = TyTop
+
+meetTypes :: Ty -> Ty -> Ty
+meetTypes TyBot _      = TyBot
+meetTypes _     TyBot  = TyBot
+meetTypes TyTop ty     = ty
+meetTypes ty    TyTop  = TyTop
+meetTypes (TyArr ty11 ty12) (TyArr ty21 ty22) 
+    = TyArr (joinTypes ty11 ty21) (meetTypes ty12 ty22)
+meetTypes (TyRecord fs1) (TyRecord fs2) = TyRecord $ recur fs1
+    where recur [] = []
+          recur ((i,ty1):fs) = case lookup i fs2 of
+                                 Just ty2 -> (i, meetTypes ty1 ty2):(recur fs)
+                                 Nothing  -> recur fs
+meetTypes ty1 ty2 | ty1 == ty2 = ty1
+                  | otherwise  = TyBot 

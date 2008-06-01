@@ -30,7 +30,18 @@ fullRefEvalTests
          "x = ref 5; x := 8; !x;")
       , ("shared state", "x : Ref Nat\ny : Ref Nat\nunit : Unit\n6 : Nat",
          "x = ref 5; y = x; x := 6; !y;")
+      , ("ref subtype", "true : Bool",
+         "(lambda r:Ref {x:Bool,y:Nat}. (!r).x) (ref {y=0,x=true});")
+      , ("join ref 1", "{x=true, y=3} : {y:Nat, x:Bool}",
+         "!(if true then ref {x=true, y=3} else ref {y = 4, x=false});")
       ]
+
+fullRefEvalErrorTests
+    = [ ("ref bad subtype 1", show badApplication,
+         "(lambda r:Ref {x:Bool,y:Nat,z:Nat}. (!r).x) (ref {y=0,x=true});")
+      , ("ref bad subtype 2", show badApplication,
+         "(lambda r:Ref {x:Bool}. (!r).x) (ref {y=0,x=true});")
+      ] 
 
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                  return $ TestList $ concat
@@ -38,9 +49,10 @@ getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                         , map (makeEvalTest  parseAndEval)    F.evalTests
                         , map (makeParseTest parseFullRef)    fullRefParseTests
                         , map (makeEvalTest  parseAndEval)    fullRefEvalTests
+                        , map (makeEvalTest  parseAndEval)    fullRefEvalErrorTests
                         , map (makeEvalTest  parseAndEval)    tyarithEvalTests
---todo                        , map (makeEvalTest  parseAndEval)    ST.fullsubEvalTests
-     --todo                   , map (makeEvalTest  parseAndEval)    ST.fullsubEvalErrorTests                       
+                        , map (makeEvalTest  parseAndEval)    ST.fullsubEvalTests
+                        , map (makeEvalTest  parseAndEval)    ST.fullsubEvalErrorTests                       
                         , [testDotFTest]
                         ]
                          

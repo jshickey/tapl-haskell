@@ -77,6 +77,8 @@ data Ty = TyVar Term -- the Term will always be a TmVar (a hack to reuse TmVar c
         | TyString
         | TyFloat
         | TyNat
+        | TyTop
+        | TyBot
         | TyRef Ty
           deriving (Show, Eq)
 

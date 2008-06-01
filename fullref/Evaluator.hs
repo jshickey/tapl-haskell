@@ -172,4 +172,7 @@ evalTerms :: [Term] -> ThrowsError [Term]
 evalTerms ts = runStoreContextThrows $ mapM eval ts
 
 parseAndEval :: String -> ThrowsError String
-parseAndEval str = parseFullRef str >>= evalTerms >>= showTerms
+parseAndEval str = do parsed <- parseFullRef str
+                      evaled <- evalTerms parsed
+                      typed  <- typeofTerms parsed
+                      showTerms evaled typed
