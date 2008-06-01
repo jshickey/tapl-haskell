@@ -9,14 +9,6 @@ import Control.Monad
 import Control.Monad.Error
 import Control.Monad.State
 
-checkType :: Term -> Ty -> Ty -> ContextThrowsError Ty
-checkType t expected output
-    = do tyT <- typeof t
-         if tyT == expected
-           then return output
-           else throwError $ TypeMismatch $ "Expected " ++ show expected ++
-                ", but saw " ++ show tyT
-
 {- -------------------------------------
    typeof
  ------------------------------------- -}
@@ -32,10 +24,22 @@ typeof (TmApp t1 t2)
          tyT2 <- typeof t2
          case tyT1 of
            (TyArr _ _) -> checkTyArr tyT1 tyT2
-           otherwise -> throwError notAbstraction
+           TyBot       -> return TyBot
+           otherwise   -> throwError notAbstraction
     where checkTyArr (TyArr tyArr1 tyArr2) tyT2
-              | tyArr1 == tyT2 = return tyArr2
-              | otherwise      = throwError badApplication 
+              | subtype tyT2 tyArr1 = return tyArr2
+              | otherwise           = throwError badApplication 
+
+-- tests whether the first arg is a subtype of the second
+subtype :: Ty -> Ty -> Bool
+subtype (TyArr ty11 ty12) (TyArr ty21 ty22) 
+                = (subtype ty21 ty11) && (subtype ty12 ty22)
+subtype TyBot _ = True
+subtype _ TyTop = True
+subtype ty1 ty2 = ty1 == ty2
+
+typeofTerms :: [Term] -> ThrowsError [Ty]
+typeofTerms = runContextThrows . (mapM typeof)
 
 {- -------------------------------------
    typeofBinding
@@ -43,3 +47,4 @@ typeof (TmApp t1 t2)
 
 typeOfBinding :: Binding -> ThrowsError Ty
 typeOfBinding (VarBind ty) = return ty
+
