@@ -25,7 +25,7 @@ botEvalErrorTests =
       "(lambda x:Bot->Bot. x) (lambda x:Top. x);")
     ]
 
--- for the rcdsubbot implementation
+-- for the rcdsubbot implementation, which expands upon bot
 rcdsubEvalTests = botEvalTests ++
     [("type match", "{x=(lambda m:Top. m)} : {x:Top -> Top}",
      "(lambda a:{x:Top->Top}. a) {x=(lambda m:Top. m)};")
@@ -55,11 +55,40 @@ rcdsubEvalErrorTests = botEvalErrorTests ++
     ]
 
 
--- full ref and fullsub expand upon the rcdsub tests
+-- for fullref and fullsub, which expand upon rcdsubbot
 fullsubEvalTests
     = rcdsubEvalTests ++
-      []
+      [("if join 1", "{y=false} : {}",
+       "if true then {y=false} else {x=true};")
+      ,("if join 2", "{x=false} : {x:Bool}",
+       "if true then {x=false} else {y=true,x=true};")
+      ,("if join 3: join in field", "{x=false} : {x:Top}",
+       "if true then {x=false} else {y=true,x=0};")
+      ,("if join 4: join lambdas in field", 
+        "{x=false, z=(lambda a:Bot->Top. a)} : {x:Top, z:(Top -> Top) -> Bot -> Top}",
+       "if true then {x=false,z=(lambda a:Bot->Top. a)} else {z=(lambda b:Top->Top. b),y=true,x=0};")
+      ,("ascribe 1", "(lambda x:Bot. x) : Bot -> Top",
+       "(lambda x:Bot. x) as Bot->Top;")
+      ,("ascribe 2", "(lambda x:Top. x) : Bot -> Top",
+       "(lambda x:Top. x) as Bot->Top;")
+      ,("fix 1", "(lambda x:Nat. (fix (lambda f:Nat->Top. (lambda x':Nat. f x'))) x) : Nat -> Top",
+       "fix (lambda f:Nat->Top. (lambda x:Nat. f x));")
+      ,("fix 2", "(lambda x:Nat. x) : Nat -> Nat",
+       "fix (lambda f:Nat->Top. (lambda x:Nat. x));")
+      ,("fix 3", "(lambda x:Top. true) : Top -> Bool",
+       "fix (lambda f:Nat->Bool. (lambda x:Top. true));")
+      ]
 
 fullsubEvalErrorTests
     = rcdsubEvalErrorTests ++
-      []
+      [("bad ascribe 1", show ascribeError,
+       "(lambda x:Bot. x) as Top->Bot;")
+      ,("bad ascribe 2", show ascribeError,
+       "(lambda x:Top. x) as Top->Bot;")
+      ,("bad fix 1", show fixError,
+       "fix (lambda f:Nat->Bot. (lambda x:Nat. x));")
+      ,("bad fix 2", show fixError,
+       "fix (lambda f:Top->Nat. (lambda x:Nat. x));")
+      ,("bad fix 3", show fixError,
+       "fix (lambda f:Nat->Bool. (lambda x:Bot. true));")
+      ]
