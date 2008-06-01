@@ -9,12 +9,6 @@ import Control.Monad
 import Control.Monad.Error
 import Control.Monad.State
 
-badApplication = TypeMismatch "Invalid argument passed to an abstraction"
-notAbstraction = TypeMismatch "First term of application must be an abstraction"
-expectedBool = TypeMismatch "The conditional of an if-statement must be a Bool"
-ifMismatch = TypeMismatch "Predicate and alternative of an if-statement must be of the same type"
-projError = TypeMismatch "A projection can only be applied to a record"
-
 checkType :: Term -> Ty -> Ty -> ContextThrowsError Ty
 checkType t expected output
     = do tyT <- typeof t

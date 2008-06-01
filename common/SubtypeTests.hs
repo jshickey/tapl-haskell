@@ -2,9 +2,64 @@
  -}
 module SubtypeTests where
 
--- reduced set of tests, for the simpler rcdsubbot implementation
-rcdsubEvalTests = []
+import TaplError
+
+-- for the bot implementation
+botEvalTests =
+    [("apply bot", "(lambda x:Bot. x x) : Bot -> Bot",
+      "lambda x:Bot. x x;")
+    ,("abs type match", "(lambda x:Top. x) : Top -> Top",
+      "(lambda x:Top->Top. x) (lambda x:Top. x);")
+    ,("abs subtype 1", "(lambda x:Top. x) : Bot -> Top",
+      "(lambda x:Bot->Top. x) (lambda x:Top. x);")
+    ,("abs subtype 2", "(lambda x:Bot. x) : Bot -> Top",
+      "(lambda x:Bot->Top. x) (lambda x:Bot. x);")
+    ]
+
+botEvalErrorTests =
+    [("apply top", show notAbstraction,
+      "lambda x:Top. x x;")
+    ,("bad abs subtype 1", show badApplication,
+      "(lambda x:Top->Top. x) (lambda x:Bot. x);")
+    ,("bad abs subtype 2", show badApplication,
+      "(lambda x:Bot->Bot. x) (lambda x:Top. x);")
+    ]
+
+-- for the rcdsubbot implementation
+rcdsubEvalTests = botEvalTests ++
+    [("type match", "{x=lambda m:Top.m} : {x:Top->Top}",
+     "(lambda a:{x:Top->Top}. a) {x=(lambda m:Top. m)};")
+    ,("app subtype", "{x=lambda m:Top.m} : {x:Bot->Top}",
+      "(lambda a:{x:Bot->Top}. a) {x=(lambda m:Top. m)};")
+    ,("width subtype 1", "{x=lambda m:Top.m, y=lambda n:Bot.n} : {x:Bot->Top}",
+      "(lambda a:{x:Bot->Top}. a) {x=(lambda m:Top. m),y=(lambda n:Bot. n)};")
+    ,("width subtype 2", "{y=lambda n:Bot.n, x=lambda m:Top.m} : {x:Bot->Top}",
+      "(lambda a:{x:Bot->Top}. a) {y=(lambda n:Bot. n), x=(lambda m:Top. m)};")
+    ,("permutation subtype", 
+      "(lambda m:Top. m) : Top -> Top",
+      "(lambda a:{x:Top->Top, y:Bot->Bot}. a.x) {y=(lambda n:Bot. n), x=(lambda m:Top. m)};")
+    ,("permutation + width subtype",
+      "(lambda n:Bot. n) : Bot -> Bot",
+      "(lambda a:{x:Bot->Top, y:Bot->Bot}. a.y) {y=(lambda n:Bot. n), x=(lambda m:Top. m)};")
+    ]
+
+rcdsubEvalErrorTests = botEvalErrorTests ++
+    [("notsubtype 1", show badApplication, 
+      "(lambda a:{x:Top->Top}. a) {x=(lambda m:Bot. m)};")
+    ,("notsubtype 2", show badApplication, 
+      "(lambda a:{x:Bot->Bot}. a) {x=(lambda m:Top. m)};")
+    ,("bad width subtype", show badApplication, 
+      "(lambda a:{x:Bot->Top}. a) {z=(lambda m:Top. m),y=(lambda n:Bot. n)};")
+    ,("bad permutation subtype", show badApplication,
+      "(lambda a:{x:Top->Top, z:Bot->Bot}. a.x) {y=(lambda n:Bot. n), x=(lambda m:Top. m)};")
+    ]
+
 
 -- full ref and fullsub expand upon the rcdsub tests
-fullsubEvalTests = rcdsubEvalTests ++
-               []
+fullsubEvalTests
+    = rcdsubEvalTests ++
+      []
+
+fullsbuEvalErrorTests
+    = rcdsubEvalErrorTests ++
+      []

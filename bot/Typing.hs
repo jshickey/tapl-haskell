@@ -36,17 +36,6 @@ typeof (TmApp t1 t2)
     where checkTyArr (TyArr tyArr1 tyArr2) tyT2
               | tyArr1 == tyT2 = return tyArr2
               | otherwise      = throwError badApplication 
-typeof (TmRecord fs) = liftM TyRecord $ mapM typeofField fs
-    where typeofField (n,t) = do ty <- typeof t
-                                 return (n, ty)
-typeof (TmProj r name) = do recordTy <- typeof r
-                            case recordTy of
-                              TyRecord fs -> accessField name fs
-                              otherwise -> throwError projError
-
-accessField name [] = throwError $ TypeMismatch $ "No field " ++ name
-accessField name ((n,t):fs) | n == name = return t
-                            | otherwise = accessField name fs
 
 {- -------------------------------------
    typeofBinding

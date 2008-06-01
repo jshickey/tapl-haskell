@@ -33,3 +33,11 @@ extractValue (Right val) = val
 runThrows :: ThrowsError String -> String
 runThrows action = extractValue $ trapError action
 
+-- some common errors
+badApplication = TypeMismatch "Invalid argument passed to an abstraction"
+notAbstraction = TypeMismatch "First term of application must be an abstraction"
+projError = TypeMismatch "A projection can only be applied to a record"
+expectedBool = TypeMismatch "The conditional of an if-statement must be a Bool"
+ifMismatch = TypeMismatch "Predicate and alternative of an if-statement must be of the same type"
+
+

@@ -18,6 +18,7 @@ getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                         , map (makeEvalTest  parseAndEval)    F.evalTests
                         , map (makeEvalTest  parseAndEval)    tyarithEvalTests
                         , map (makeEvalTest  parseAndEval)    ST.fullsubEvalTests
+                        , map (makeEvalTest  parseAndEval)    ST.fullsubEvalErrorTests
 --todo                        , [testDotFTest]
                         ]
                          

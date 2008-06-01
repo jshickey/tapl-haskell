@@ -25,16 +25,13 @@ parseTests = [("whitespace1", TmRecord [], "  \t{};"),
                                 (TmVar 0 1)),
                "lambda x:Bot. x x x;")]
 
-evalTests = []
-
 getAllTests = do testDotFTest <- getTestDotFTest parseAndEval
                  return $ TestList $ concat
                         [ map (makeParseTest parseRcdsub)  parseTests
-                        , map (makeEvalTest  parseAndEval) evalTests
+                        , map (makeEvalTest  parseAndEval) ST.rcdsubEvalErrorTests
                         , map (makeEvalTest  parseAndEval) ST.rcdsubEvalTests
---TODO                        , [testDotFTest]
+                        , [testDotFTest]
                         ]
                          
-
 main :: IO ()
 main = getAllTests >>= runTests
