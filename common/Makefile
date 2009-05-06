@@ -26,4 +26,4 @@ run-make-all: RunMakeAll.hs
 	ghc --make RunMakeAll.hs -o run-make-all
 
 clean:
-	-rm *.hi *.o test-runner run-make-all
+	-rm HUnit-1.0/*.hi HUnit-1.0/*.o *.hi *.o test-runner run-make-all

@@ -18,6 +18,9 @@ import System.Cmd
 import System.Exit
 import Control.Monad
 
+-- TODO: make this empty
+inProgress = ["fullequirec", "fullisorec", "equirec"]
+
 main :: IO ()
 main = do args <- getArgs
           case getOpt Permute options args of
@@ -45,11 +48,13 @@ getCmd ((Cmd c):_) | c == "make"  = execInDirs ""
 getCmd (_:cs) = getCmd cs 
 
 execInDirs :: String -> String -> IO ()
-execInDirs cmd  dir 
+execInDirs cmd dir
     = do dirContents <- liftM (map (dir </>)) (getDirectoryContents dir)
          subDirs <- filterM doesDirectoryExist dirContents
-         let validSubDirs = filter (((/=) '.') . head . snd . splitFileName) subDirs
+         let validSubDirs = filter (valid . snd . splitFileName) subDirs
          execute validSubDirs cmd
+    where valid dir = (head dir) /= '.' &&
+                      (not (dir `elem` inProgress))
 
 execute [] cmd = putStrLn "\nAll make commands completed successfully." >>
                  if cmd == "test"

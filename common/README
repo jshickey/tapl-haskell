@@ -2,4 +2,4 @@ Contains modules useful across multiple TAPL implementations.
 
 Run "make test" to test the modules.
 
-To run a make operation on all implementations, compile and execute the run-make-all script (e.g., "make run-make-all; run-make-all test --dir ../").  See RunMakeAll.hs for more details.
+To run a make operation on all implementations, compile and execute the run-make-all script (e.g., "make run-make-all && ./run-make-all --command=test --dir=../").  See RunMakeAll.hs for more details.

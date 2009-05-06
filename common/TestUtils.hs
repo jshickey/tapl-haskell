@@ -6,6 +6,7 @@ import HUnit
 import TaplError
 import Control.Monad
 import System.Exit
+import System.FilePath ((</>))
 import Util
 
 makeEvalTest parseAndEval (label, expected, input) = 
@@ -30,9 +31,12 @@ dropTrailingNewlines str | str == "" = ""
 -- Each OCaml implementation has a test.f that we copy over into our
 -- implementation, along with a test.out file that contains the output
 -- from running it on the OCaml impl
-getTestDotFTest parseAndEval
-    = do input <- getFileContents "test.f"
-         output <- getFileContents "test.out"
+getTestDotFTest parseAndEval =
+    getTestDotFTestWithPath parseAndEval "."
+
+getTestDotFTestWithPath parseAndEval path
+    = do input <- getFileContents (path </> "test.f")
+         output <- getFileContents (path </> "test.out")
          return $ makeEvalTest parseAndEval 
                     ("test.f", 
                      output, 
