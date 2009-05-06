@@ -1,0 +1,6 @@
+TODO -- add more
+
+USAGE:
+
+Each individual implementation will have a .gen file in its corresponding subdirectory.  This file specifies what code will be generated when 'make gen' is called.
+
