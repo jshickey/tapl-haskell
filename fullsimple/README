@@ -11,10 +11,6 @@ SAMPLE USAGE:
 
 See the Makefile for all targets.
 
-ORGANIZATION:
-
-All functionality except for typing has been move into the "nontyping" subdirectory, because the fullsub implementation only differs in that it adds subtyping.  Of course, both implementations will also have their own Makefile and test suites.
-
 NOTES:
 
 Formatting changes have been made to test.out, which was originally constructed as the output of calling the OCaml implementation on test.f.
