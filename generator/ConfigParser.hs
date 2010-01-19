@@ -44,16 +44,12 @@ parseList label = reserved label >>
                   symbol "=" >>
                   identifier `sepBy` comma
 
-parseOptions = do opts <- parseList "options"
-                  let subtypes = "subtypes" `elem` opts
-                  return $ Options subtypes
-
 configParser = do terms <- parseList "terms"
                   types <- parseList "types"
                   tests <- parseList "tests"
-                  options <- parseOptions
+                  options <- parseList "options"
                   return $ Config (Terms terms) (Types types)
-                             (Tests tests) options
+                             (Tests tests) (Options options)
     
 parseConfig :: String -> ThrowsError Config
 parseConfig str =

@@ -12,14 +12,19 @@ newtype Types = Types [String]
 
 newtype Tests = Tests [String]
 
-data Options = Options {subtypes::Bool
-                       }
+newtype Options = Options [String]
     
 data Config = Config {terms::Terms,
                       types::Types,
                       tests::Tests,
                       options::Options}
-            
+
+hasType :: Config -> String -> Bool
+hasType (Config _ (Types ts) _ _) t = t `elem` ts
+
+hasOption :: Config -> String -> Bool
+hasOption (Config _ _ _ (Options ts)) t = t `elem` ts
+
 type IOThrowsError = ErrorT TaplError IO
 
 liftThrows :: ThrowsError a -> IOThrowsError a
