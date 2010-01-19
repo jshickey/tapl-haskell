@@ -91,7 +91,7 @@ base = "{- Provides the methods for determining the type of a term or a binding\
 \typeof (TmInert ty) = return ty\n\
 \typeof (TmFix t) = do ty <- typeof t\n\
 \                      case ty of\n\
-\                        TyArr t1 t2 | t1 == t2 -> return t1\n\
+\                        TyArr t1 t2 | subtype t2 t1 -> return t2\n\
 \                        otherwise -> throwError fixError\n\
 \typeof _ = throwError $ Default \"Unknown type\"\n\
 \\n\
