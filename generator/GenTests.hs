@@ -7,9 +7,16 @@ import TaplError
 import Config
         
 genTests :: Config -> IOThrowsError ()
-genTests config = lift $ writeToFile "Tests.hs" file
+genTests config
+    = lift $ writeToFile "Tests.hs"
+      (base ++
+       (if (subtypes (options config)) then subtype_imports else "") ++
+       begin_tests ++
+       simple_tests ++
+       (if (subtypes (options config)) then subtype_tests else "") ++
+       end_tests)
 
-file = "module Main where\n\
+base = "module Main where\n\
 \\n\
 \import Control.Monad\n\
 \import HUnit\n\
@@ -20,18 +27,24 @@ file = "module Main where\n\
 \import TestUtils\n\
 \import Evaluator\n\
 \import TaplError\n\
-\import Parser\n\
-\\n\
-\-- most of the tests have been moved up into FullSimpleTests\n\
-\\n\
+\import Parser\n"
+
+subtype_imports = "import qualified SubtypeTests as ST\n"
+                 
+begin_tests = "\n\
 \getAllTests = do testDotFTest <- getTestDotFTestWithPath parseAndEval \"..\"\n\
-\                 return $ TestList $ concat\n\
-\                        [ map (makeParseTest parseFullSimple) F.parseTests\n\
+\                 return $ TestList $ concat\n"
+                                               
+simple_tests = "                        [ map (makeParseTest parseFullSimple) F.parseTests\n\
 \                        , map (makeEvalTest  parseAndEval)    F.evalTests\n\
-\                        , map (makeEvalTest  parseAndEval)    tyarithEvalTests\n\
-\                        , [testDotFTest]\n\
+\                        , map (makeEvalTest  parseAndEval)    tyarithEvalTests\n"
+
+subtype_tests = "                        , map (makeEvalTest  parseAndEval)   ST.fullsubEvalTests\n\
+\                        , map (makeEvalTest  parseAndEval)   ST.fullsubEvalErrorTests\n"
+                                            
+end_tests = "                        , [testDotFTest]\n\
 \                        ]\n\
 \                         \n\
 \\n\
 \main :: IO ()\n\
-\main = getAllTests >>= runTests\n"                      
+\main = getAllTests >>= runTests\n"
