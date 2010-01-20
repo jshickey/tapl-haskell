@@ -4,16 +4,13 @@ import Control.Monad.Error
 
 import Util
 import TaplError
-import qualified Config as C
+import Config
         
-genTyping :: C.Config -> C.IOThrowsError ()
-genTyping config = lift $ C.writeToFile "Typing.hs" (base ++ rest)
-    where rest = if use_subtypes
+genTyping :: Config -> IOThrowsError ()
+genTyping c = lift $ writeToFile "Typing.hs" (base ++ rest)
+    where rest = if (hasSubtypes c)
                  then (subtypeFunc ++ joinFunc)
                  else (dummySubtypeFunc ++ dummyJoinFunc)
-          use_subtypes = C.hasOption config "subtypes"
-          use_isorec   = C.hasType config "isorec"
-          use_equirec  = C.hasType config "equirec"
 
 base = "{- Provides the methods for determining the type of a term or a binding\n\
 \ -}\n\

@@ -4,24 +4,21 @@ import Control.Monad.Error
 
 import Util
 import TaplError
-import qualified Config as C
+import Config
         
-genTests :: C.Config -> C.IOThrowsError ()
-genTests config
-    = lift $ C.writeToFile "Tests.hs"
+genTests :: Config -> IOThrowsError ()
+genTests c
+    = lift $ writeToFile "Tests.hs"
       (base ++
-       (if use_subtypes then subtype_imports else "") ++
-       (if use_isorec then isorec_imports else "") ++
-       (if use_equirec then equirec_imports else "") ++
+       (if (hasSubtypes c) then subtype_imports else "") ++
+       (if (useIsorec c) then isorec_imports else "") ++
+       (if (useEquirec c) then equirec_imports else "") ++
        begin_tests ++
        simple_tests ++
-       (if use_subtypes then subtype_tests else "") ++
-       (if use_isorec then isorec_tests else "") ++
-       (if use_equirec then equirec_tests else "") ++
+       (if (hasSubtypes c) then subtype_tests else "") ++
+       (if (useIsorec c) then isorec_tests else "") ++
+       (if (useEquirec c) then equirec_tests else "") ++
        end_tests)
-    where use_subtypes = C.hasOption config "subtypes"
-          use_isorec   = C.hasType config "isorec"
-          use_equirec  = C.hasType config "equirec"
 
 base = "module Main where\n\
 \\n\
@@ -55,9 +52,7 @@ isorec_tests  = "                        , map (makeParseTest parseFullSimple) I
 \                        , map (makeEvalTest  parseAndEval)   IT.evalTests\n\
 \                        , map (makeEvalTest  parseAndEval)   IT.evalErrorTests\n"
 
-equirec_tests = "                        , map (makeParseTest parseFullSimple) ET.parseTests\n\
-\                        , map (makeEvalTest  parseAndEval)   ET.evalTests\n\
-\                        , map (makeEvalTest  parseAndEval)   ET.evalErrorTests\n"
+equirec_tests = "                        , map (makeEvalTest  parseAndEval)   ET.evalTests\n"
                                             
 end_tests = "                        , [testDotFTest]\n\
 \                        ]\n\

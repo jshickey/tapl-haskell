@@ -5,15 +5,10 @@ module EquirecTests where
 import Syntax
 import TaplError
 
--- FORMAT: (test name, expected parse tree, input)
-parseTests = [("comments", TmTrue, "TODO")
-             ]
-    
 -- FORMAT: (test name, expected printed output, input)
-evalTests = [("unfold fold", "TODO",
-              "TODO")
+evalTests = [("define Rec type", "NatList :: *",
+              "NatList = Rec X. <nil:Unit, cons:{Nat,X}>;")
+            ,("instance of Rec type", "nil : NatList",
+              "NatList = Rec X. <nil:Unit, cons:{Nat,X}>; nil = <nil=unit> as NatList;")
             ]
 
-evalErrorTests = [("todo", "todo",
-                  "todo")
-                 ]

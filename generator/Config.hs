@@ -19,11 +19,15 @@ data Config = Config {terms::Terms,
                       tests::Tests,
                       options::Options}
 
-hasType :: Config -> String -> Bool
-hasType (Config _ (Types ts) _ _) t = t `elem` ts
+useType :: String -> Config -> Bool
+useType t (Config _ (Types ts) _ _) = t `elem` ts
 
-hasOption :: Config -> String -> Bool
-hasOption (Config _ _ _ (Options ts)) t = t `elem` ts
+hasOption :: String -> Config -> Bool
+hasOption t (Config _ _ _ (Options ts)) = t `elem` ts
+
+hasSubtypes = hasOption "subtypes"
+useIsorec = useType "isorec"
+useEquirec = useType "equirec"
 
 type IOThrowsError = ErrorT TaplError IO
 
