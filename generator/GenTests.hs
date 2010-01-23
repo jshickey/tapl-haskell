@@ -48,9 +48,7 @@ simple_tests  = "                        [ map (makeParseTest parseFullSimple) F
 subtype_tests = "                        , map (makeEvalTest  parseAndEval)   ST.fullsubEvalTests\n\
 \                        , map (makeEvalTest  parseAndEval)   ST.fullsubEvalErrorTests\n"
 
-isorec_tests  = "                        , map (makeParseTest parseFullSimple) IT.parseTests\n\
-\                        , map (makeEvalTest  parseAndEval)   IT.evalTests\n\
-\                        , map (makeEvalTest  parseAndEval)   IT.evalErrorTests\n"
+isorec_tests  = "                        , map (makeEvalTest  parseAndEval)   IT.evalTests\n"
 
 equirec_tests = "                        , map (makeEvalTest  parseAndEval)   ET.evalTests\n"
                                             
