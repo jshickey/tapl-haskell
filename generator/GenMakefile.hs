@@ -32,6 +32,6 @@ file = "#   make         to rebuild the executable file f\n\
 \\t./f test.f\n\
 \\n\
 \clean:\n\
-\\t-rm *.hi *.o f test-runner *.hi *.o\n\
+\\t-rm *.hi *.o f test-runner \n\
 \\n"
     

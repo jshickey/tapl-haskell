@@ -127,9 +127,10 @@ file = "module Printing ( showTerms ) where\n\
 \\n\
 \showTerms :: [Term] -> [Ty] -> ThrowsError String\n\
 \showTerms ts = runPrinter . mapM_ showLine . zip ts\n\
-\    where showLine (t,ty) = showTerm t >> \n\
-\                            showTypeOfTerm t ty >>\n\
-\                            tell \"\\n\"\n\
+\    where showLine (t,ty) = do origCtx <- get\n\
+\                               showTerm t\n\
+\                               withContext origCtx $ showTypeOfTerm t ty\n\
+\                               tell \"\\n\"\n\
 \\n\
 \-- we need to special handling for binders, but otherwise\n\
 \-- we just use the type that was passed in\n\
@@ -167,7 +168,7 @@ file = "module Printing ( showTerms ) where\n\
 \                        if ctxLength ctx == ctxLen\n\
 \                          then do name <- liftThrowsToPrinter $ nameOf idx ctx\n\
 \                                  tell name\n\
-\                          else throwError $ Default $ \"Context length mismatch: \" ++ \"var had \" ++ show ctxLen ++ \", but the context length was \" ++ show (ctxLength ctx)\n\
+\                          else throwError $ Default $ \"Context length mismatch: \" ++ \"var \" ++ (show idx) ++ \" had \" ++ show ctxLen ++ \", but the context length was \" ++ show (ctxLength ctx) ++ \" in the context: \" ++ show ctx\n\
 \\n\
 \isnumber :: String -> Bool                               \n\
 \isnumber n = elem n $ map show [0..9]\n"                      
