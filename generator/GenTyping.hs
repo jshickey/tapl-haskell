@@ -7,7 +7,11 @@ import TaplError
 import Config
         
 genTyping :: Config -> IOThrowsError ()
-genTyping c = lift $ writeToFile "Typing.hs" (base ++ rest)
+genTyping c =
+    lift $ writeToFile "Typing.hs" $ base ++
+             (if (useIsorec c) then isorecTypeof else "") ++
+             (if (useEquirec c) then equirecTypeof else "") ++
+             end ++ rest
     where rest = if (hasSubtypes c)
                  then (subtypeFunc ++ joinFunc)
                  else (dummySubtypeFunc ++ dummyJoinFunc)
@@ -92,8 +96,14 @@ base = "{- Provides the methods for determining the type of a term or a binding\
 \typeof (TmFix t) = do ty <- typeof t\n\
 \                      case ty of\n\
 \                        TyArr t1 t2 | subtype t2 t1 -> return t2\n\
-\                        otherwise -> throwError fixError\n\
-\typeof _ = throwError $ Default \"Unknown type\"\n\
+\                        otherwise -> throwError fixError\n"
+
+isorecTypeof = "typeof (TmFold ty t) =  return ty\n\
+\typeof (TmUnfold ty t) = return ty\n"
+
+equirecTypeof = "" -- TODO
+
+end = "typeof _ = throwError $ Default \"Unknown type\"\n\
 \\n\
 \accessField name [] = throwError $ TypeMismatch $ \"No field \" ++ name\n\
 \accessField name ((n,t):fs) | n == name = return t\n\

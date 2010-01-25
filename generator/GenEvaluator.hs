@@ -7,9 +7,13 @@ import TaplError
 import Config
         
 genEvaluator :: Config -> IOThrowsError ()
-genEvaluator config = lift $ writeToFile "Evaluator.hs" file
+genEvaluator c =
+    lift $ writeToFile "Evaluator.hs" $ begin ++
+             (if (useIsorec c) then isorecEval else "") ++
+             (if (useEquirec c) then equirecEval else "") ++
+             end
 
-file = "    \n\
+begin = "    \n\
 \{- Small-step evaluator for fullsimple \n\
 \ -}\n\
 \module Evaluator ( parseAndEval ) where\n\
@@ -144,8 +148,15 @@ file = "    \n\
 \eval1 (TmTag var t ty) | isval t   = return Nothing\n\
 \                       | otherwise = eval1Cons (\\t' -> TmTag var t' ty) t\n\
 \eval1 (TmFix t) | not $ isval t     = eval1Cons TmFix t\n\
-\eval1 t@(TmFix (TmAbs var ty body)) = return $ Just $ apply t body\n\
-\eval1 _ = return Nothing\n\
+\eval1 t@(TmFix (TmAbs var ty body)) = return $ Just $ apply t body\n"
+
+isorecEval = "eval1 (TmUnfold _ (TmFold _ t)) = eval1 t\n\
+\eval1 (TmFold ty t) = eval1Cons (TmFold ty) t\n\
+\eval1 (TmUnfold ty t) = eval1Cons (TmUnfold ty) t\n"
+ 
+equirecEval = "" -- todo
+                                                                     
+end = "eval1 _ = return Nothing\n\
 \\n\
 \{- ---------------------------------\n\
 \ Full evaluation\n\

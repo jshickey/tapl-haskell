@@ -7,9 +7,18 @@ import TaplError
 import Config
         
 genSyntax :: Config -> IOThrowsError ()
-genSyntax config = lift $ writeToFile "Syntax.hs" file
+genSyntax c =
+    lift $ writeToFile "Syntax.hs" $ base ++
+    beginTerms ++
+    (if (useIsorec c) then isorecTerms else "") ++
+    endTerms ++
+    middle ++
+    beginTypes ++
+    (if ((useIsorec c) || (useEquirec c)) then recTypes else "") ++
+    endTypes ++
+    end
 
-file = "{- Defines the terms, types, and bindings used in the fullsimple\n\
+base = "{- Defines the terms, types, and bindings used in the fullsimple\n\
 \   implemenation, and provides a couple simple helper functions.\n\
 \ -}\n\
 \\n\
@@ -20,8 +29,9 @@ file = "{- Defines the terms, types, and bindings used in the fullsimple\n\
 \import Control.Monad.Error\n\
 \\n\
 \import TaplError    \n\
-\\n\
-\{- --------------------------------\n\
+\\n"
+
+beginTerms = "{- --------------------------------\n\
 \   TERMS\n\
 \   -------------------------------- -}\n\
 \\n\
@@ -47,9 +57,14 @@ file = "{- Defines the terms, types, and bindings used in the fullsimple\n\
 \          | TmPred Term\n\
 \          | TmIsZero Term\n\
 \          | TmInert Ty\n\
-\          | TmBind String Binding\n\
-\          deriving (Show, Eq)\n\
-\\n\
+\          | TmBind String Binding\n"
+
+isorecTerms = "          | TmFold Ty Term\n\
+\          | TmUnfold Ty Term \n"
+
+endTerms = "          deriving (Show, Eq)\n"
+           
+middle = "\n\
 \isnumericval :: Term -> Bool\n\
 \isnumericval TmZero          = True\n\
 \isnumericval (TmSucc t)      = isnumericval t\n\
@@ -68,8 +83,9 @@ file = "{- Defines the terms, types, and bindings used in the fullsimple\n\
 \isval (TmTag _ t _)      = isval t\n\
 \isval t | isnumericval t = True\n\
 \        | otherwise      = False\n\
-\\n\
-\{- --------------------------------\n\
+\\n"
+
+beginTypes = "{- --------------------------------\n\
 \   TYPES\n\
 \   -------------------------------- -}\n\
 \\n\
@@ -84,9 +100,13 @@ file = "{- Defines the terms, types, and bindings used in the fullsimple\n\
 \        | TyFloat\n\
 \        | TyNat\n\
 \        | TyTop\n\
-\        | TyBot\n\
-\          deriving (Show, Eq)\n\
-\\n\
+\        | TyBot\n"
+
+recTypes = "        | TyRec Ty Ty\n"
+               
+endTypes = "          deriving (Show, Eq)\n"
+
+end = "\n\
 \{- --------------------------------\n\
 \   BINDING\n\
 \   -------------------------------- -}\n\

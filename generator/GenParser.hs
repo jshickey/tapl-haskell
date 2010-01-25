@@ -7,9 +7,27 @@ import TaplError
 import Config
         
 genParser :: Config -> IOThrowsError ()
-genParser config = lift $ writeToFile "Parser.hs" file
+genParser c =
+    lift $ writeToFile "Parser.hs" $
+    base ++
+    beginLangDef ++
+    (if (useIsorec c) then isorecKeywords else "") ++
+    (if (useEquirec c) then equirecKeywords else "") ++
+    endLangDef ++
+    lexer ++
+    parseBasicTypes ++
+    (if ((useIsorec c) || (useEquirec c)) then parseRecType else "") ++
+    beginParseTypeArr ++
+    (if ((useIsorec c) || (useEquirec c)) then recParseTypeArr else "") ++
+    endParseTypeArr ++
+    parseBasicTerms ++
+    (if (useIsorec c) then parseFold else "") ++
+    beginParseNonApp ++
+    (if (useIsorec c) then foldParseNonApp else "") ++
+    endParseNonApp ++
+    end
 
-file = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSimple,\n\
+base = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSimple,\n\
 \   takes a string as input, and returns a list of terms, where each term\n\
 \   was separated by a semicolon in the input.\n\
 \ -}\n\
@@ -27,8 +45,9 @@ file = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSim
 \import Typing\n\
 \import TaplError\n\
 \import SimpleContext\n\
-\\n\
-\{- ------------------------------\n\
+\\n"
+
+beginLangDef = "{- ------------------------------\n\
 \   Lexer, making use of the Parsec.Token and Language\n\
 \   modules for ease of lexing programming language constructs\n\
 \   ------------------------------ -}\n\
@@ -43,13 +62,19 @@ file = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSim
 \                , opLetter        = fail \"no operators\"\n\
 \                , reservedOpNames = []\n\
 \                , caseSensitive   = True\n\
-\                , reservedNames   = [\"inert\", \"true\", \"false\", \"if\", \"then\", \"else\", \"Bool\", \"Nat\", \"String\", \"Unit\", \"Float\", \"case\", \"of\", \"as\", \"lambda\", \"let\", \"in\", \"fix\", \"letrec\", \"timesfloat\", \"succ\", \"pred\", \"iszero\", \"unit\"]\n\
+\                , reservedNames   = [\"inert\", \"true\", \"false\", \"if\", \"then\", \"else\", \"Bool\", \"Nat\", \"String\", \"Unit\", \"Float\", \"case\", \"of\", \"as\", \"lambda\", \"let\", \"in\", \"fix\", \"letrec\", \"timesfloat\", \"succ\", \"pred\", \"iszero\", \"unit\""
+isorecKeywords = ", \"Rec\", \"fold\", \"unfold\""
+equirecKeywords = ", \"Rec\""
+                  
+endLangDef = " ]\n\
 \                }\n\
-\\n\
-\lexer = P.makeTokenParser fullSimpleDef\n\
+\\n"
+
+lexer = "lexer = P.makeTokenParser fullSimpleDef\n\
 \\n\
 \parens        = P.parens        lexer\n\
 \braces        = P.braces        lexer\n\
+\brackets      = P.brackets      lexer\n\
 \squares       = P.squares       lexer\n\
 \identifier    = P.identifier    lexer\n\
 \reserved      = P.reserved      lexer\n\
@@ -61,8 +86,9 @@ file = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSim
 \colon         = P.colon         lexer\n\
 \stringLiteral = P.stringLiteral lexer\n\
 \natural       = P.natural       lexer\n\
-\\n\
-\{- ------------------------------\n\
+\\n"
+ 
+parseBasicTypes = "{- ------------------------------\n\
 \   Parsing Binders\n\
 \   ------------------------------ -}\n\
 \\n\
@@ -152,8 +178,16 @@ file = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSim
 \                          symbol \":\"\n\
 \                          ty <- parseType\n\
 \                          return (a,ty)\n\
-\\n\
-\parseTypeArr = parseTypeBool   <|>\n\
+\\n"
+
+parseRecType = "parseRecType = do reserved \"Rec\"\n\
+\                  nt <- parseNamedType\n\
+\                  symbol \".\"\n\
+\                  ty <- parseType\n\
+\                  return $ TyRec nt ty\n\
+\\n"
+
+beginParseTypeArr = "parseTypeArr = parseTypeBool   <|>\n\
 \               parseTypeNat    <|>\n\
 \               parseTypeFloat  <|>\n\
 \               parseTypeUnit   <|>\n\
@@ -162,12 +196,16 @@ file = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSim
 \               parseTypeBot    <|>\n\
 \               parseTypeRecord <|>\n\
 \               parseNamedType  <|>\n\
-\               parseVariantType  <|>\n\
-\               parens parseType\n\
+\               parseVariantType  <|>\n"
+
+recParseTypeArr = "               parseRecType  <|>\n"
+                                        
+endParseTypeArr = "               parens parseType\n\
 \\n\
 \parseType = parseTypeArr `chainr1` (symbol \"->\" >> return TyArr)\n\
-\\n\
-\{- ------------------------------\n\
+\\n"
+
+parseBasicTerms = "{- ------------------------------\n\
 \   Parsing zero-arg terms\n\
 \   ------------------------------ -}\n\
 \\n\
@@ -315,8 +353,22 @@ file = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSim
 \                           t <- parseTerm\n\
 \                           setState ctx\n\
 \                           return (label, (var,t))\n\
+\\n"
+
+parseFold = "{- ------------------------------\n\
+\   Fold and Unfold\n\
+\   ------------------------------ -}\n\
 \\n\
-\{- ------------------------------\n\
+\foldHelper keyword cons = do reserved keyword\n\
+\                             ty <- brackets parseType\n\
+\                             t <- parseTerm\n\
+\                             return $ cons ty t\n\
+\\n\ 
+\parseFold = foldHelper \"fold\" TmFold\n\
+\parseUnfold = foldHelper \"unfold\" TmUnfold\n\
+\\n"  
+
+beginParseNonApp = "{- ------------------------------\n\
 \   Putting it all together\n\
 \   ------------------------------ -}\n\
 \\n\
@@ -341,9 +393,14 @@ file = "{- Parsec parser for fullsimple.  The sole expected method, parseFullSim
 \              parseVariant <|>\n\
 \              parseInert <|>\n\
 \              parseFix <|>\n\
-\              parseLetrec <|>\n\
-\              parens parseTerm\n\
-\\n\
+\              parseLetrec <|>\n"
+
+foldParseNonApp = "              parseFold <|>\n\
+\              parseUnfold <|>\n"
+               
+endParseNonApp = "              parens parseTerm\n"
+
+end = "\n\
 \-- parses a non-application which could be an ascription\n\
 \-- (the non-application parsing is left-factored)\n\
 \parseNonAppOrAscribe = do t <- parseNonApp\n\
