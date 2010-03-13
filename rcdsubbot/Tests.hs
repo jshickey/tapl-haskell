@@ -1,7 +1,7 @@
 module Main where
 
 import Control.Monad
-import HUnit
+import Test.HUnit
 
 import ArithTests
 import qualified SubtypeTests as ST

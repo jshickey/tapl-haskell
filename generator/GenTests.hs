@@ -23,7 +23,7 @@ genTests c
 base = "module Main where\n\
 \\n\
 \import Control.Monad\n\
-\import HUnit\n\
+\import Test.HUnit\n\
 \\n\
 \import ArithTests\n\
 \import qualified FullSimpleTests as F\n\

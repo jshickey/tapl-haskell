@@ -29,7 +29,7 @@ equirecFiles = " ../../common/EquirecTests.hs"
 
 end = "\n\
 \\n\
-\INCLUDE = -i../../common -i../../common/HUnit-1.0 -i./nontyping\n\
+\INCLUDE = -i../../common -i./nontyping\n\
 \\n\
 \f: $(FILES) Main.hs\n\
 \\tghc $(INCLUDE) -fglasgow-exts --make Main.hs -o f\n\

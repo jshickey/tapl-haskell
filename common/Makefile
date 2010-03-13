@@ -5,7 +5,7 @@
 
 FILES = Util.hs TaplError.hs
 
-INCLUDE = -iHUnit-1.0
+INCLUDE = 
 
 test-runner: $(FILES) Tests.hs
 	ghc $(INCLUDE) --make Tests.hs -o test-runner
@@ -26,4 +26,4 @@ run-make-all: RunMakeAll.hs
 	ghc --make RunMakeAll.hs -o run-make-all
 
 clean:
-	-rm HUnit-1.0/*.hi HUnit-1.0/*.o *.hi *.o test-runner run-make-all
+	-rm *.hi *.o test-runner run-make-all

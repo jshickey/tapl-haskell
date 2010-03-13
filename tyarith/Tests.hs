@@ -1,7 +1,7 @@
 module Main where
 
 import Control.Monad
-import HUnit
+import Test.HUnit
 import TaplError
 import Typing
 import TestUtils

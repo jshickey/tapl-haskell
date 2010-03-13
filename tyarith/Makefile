@@ -6,7 +6,7 @@
 
 FILES = Typing.hs ../arith/Arith.hs ../arith/ArithParser.hs ../arith/Evaluator.hs ../common/TaplError.hs ../common/Util.hs ../common/TestUtils.hs
 
-INCLUDE = -i../arith -i../common -i../common/HUnit-1.0
+INCLUDE = -i../arith -i../common
 
 f: $(FILES) Main.hs
 	ghc $(INCLUDE) --make Main.hs -o f

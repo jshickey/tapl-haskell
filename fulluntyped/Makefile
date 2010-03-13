@@ -6,7 +6,7 @@
 
 FILES = FullUntyped.hs FullUntypedParser.hs Evaluator.hs Context.hs ../common/TaplError.hs ../common/Util.hs ../common/UntypedTests.hs ../common/ArithTests.hs ../common/TestUtils.hs
 
-INCLUDE = -i../common -i../common/HUnit-1.0
+INCLUDE = -i../common
 
 f: $(FILES) Main.hs
 	ghc $(INCLUDE) -fglasgow-exts --make Main.hs -o f

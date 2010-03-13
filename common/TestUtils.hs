@@ -2,7 +2,7 @@
  -}
 module TestUtils where
 
-import HUnit
+import Test.HUnit
 import TaplError
 import Control.Monad
 import System.Exit

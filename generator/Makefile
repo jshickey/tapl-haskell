@@ -1,6 +1,6 @@
 FILES = ../common/Util.hs ../common/TestUtils.hs ../common/TaplError.hs Config.hs ConfigParser.hs GenEvaluator.hs GenMain.hs GenParser.hs GenPrinting.hs GenSyntax.hs GenTests.hs GenTyping.hs GenMakefile.hs Tests.hs
 
-INCLUDE = -i../common -i../common/HUnit-1.0
+INCLUDE = -i../common
 
 f: $(FILES) ./Main.hs
 	ghc $(INCLUDE) -fglasgow-exts --make ./Main.hs -o generate

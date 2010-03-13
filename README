@@ -9,12 +9,14 @@ To test the entire project, enter the "common" subdirectory and execute "make al
 To run interactively, you will need to augment the include path.  For example,
 from within the "arith" subdirectory, invoke ghci using:
 
-  ghci -i../common -i../common/HUnit-1.0
+  ghci -i../common
 
-These implementations have only been tested using ghc-6.8.1 on Ubuntu 7.10.
+It depends on the Parsec and HUnit libraries.
+  
+These implementations have only been tested using GHC on Ubuntu, with the above libraries installed.
 
 TODO:
 * My make-fu is horrible.  In particular, "common" does make it's own libraries.  And I'm sure there are other ways this part of the project can be improved/fixed.
 
-* A version of HUnit is included, which make the project self-contained, but is the wrong long-term solution.
+
 

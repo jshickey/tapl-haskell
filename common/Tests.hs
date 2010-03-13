@@ -2,7 +2,7 @@ module Main where
 
 import System.Directory (getCurrentDirectory)
 import System.FilePath ((</>))
-import HUnit
+import Test.HUnit
 import Control.Monad.Error
 import Util
 import TaplError
