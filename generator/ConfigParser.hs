@@ -18,13 +18,15 @@ import TaplError
    Lexer, making use of the Parsec.Token and Language
    modules for ease of lexing programming language constructs
    ------------------------------ -}
+fileChar = letter <|> digit <|> oneOf ".-_/\\"
+
 configDef = LanguageDef
                 { commentStart    = "/*"
                 , commentEnd      = "*/"
                 , commentLine     = "//"
                 , nestedComments  = False
-                , identStart      = letter 
-                , identLetter     = letter <|> digit
+                , identStart      = fileChar
+                , identLetter     = fileChar
                 , opStart         = fail "no operators"
                 , opLetter        = fail "no operators"
                 , reservedOpNames = []
@@ -43,7 +45,7 @@ comma         = P.comma         lexer
 
 parseList label = reserved label >>
                   symbol "=" >>
-                  identifier `sepBy` comma
+                  (spaces >> identifier) `sepBy` comma
                              
 copyConfig = liftM CopyConfig (parseList "files")
                              

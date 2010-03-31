@@ -44,7 +44,7 @@ genDest f = do d <- getCurrentDirectory
                createPath baseGenPath
                let output = baseGenPath </> (last ds)
                createPath output
-               return $ output </> f
+               return $ output </> (last (splitPath f))
 
 createPath :: FilePath -> IO ()
 createPath path = do exists <- doesDirectoryExist path

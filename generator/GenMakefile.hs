@@ -2,6 +2,7 @@ module GenMakefile (genMakefile) where
 
 import Control.Monad.Error
 import System.FilePath ((</>), splitPath, joinPath)
+import System.Directory (getCurrentDirectory)
     
 import Util
 import TaplError
@@ -20,11 +21,12 @@ create generated toCopy = copyFiles allToCopy >>
     where allToCopy = baseToCopy ++ toCopy
           contents = begin ++
                      "FILES = " ++
-                     toList (map removePath (generated ++ allToCopy)) ++
+                     toList (map removePath (generated ++ toCopy)) ++
                      end
           removePath = last . splitPath
           toList = foldr1 (\x y -> x ++ " " ++ y)
-          copyFiles = mapM (lift . copyToGen)
+          copyFiles fs = do d <- lift getCurrentDirectory
+                            mapM (lift . copyToGen . (d </>)) fs
 
 begin = "#   make         to rebuild the executable file f\n\
 \#   make test    to rebuild the executable and run the unit tests\n\
