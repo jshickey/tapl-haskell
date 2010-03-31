@@ -29,7 +29,8 @@ configDef = LanguageDef
                 , opLetter        = fail "no operators"
                 , reservedOpNames = []
                 , caseSensitive   = True
-                , reservedNames   = ["terms", "types", "tests", "options"]
+                , reservedNames   = ["files", "terms", "types"
+                                    , "tests", "options"]
                 }
 
 lexer = P.makeTokenParser configDef
@@ -43,17 +44,19 @@ comma         = P.comma         lexer
 parseList label = reserved label >>
                   symbol "=" >>
                   identifier `sepBy` comma
+                             
+copyConfig = liftM CopyConfig (parseList "files")
+                             
+genConfig = do terms <- parseList "terms"
+               types <- parseList "types"
+               tests <- parseList "tests"
+               options <- parseList "options"
+               return $ GenConfig (Terms terms) (Types types)
+                          (Tests tests) (Options options)
+config = (try copyConfig) <|> genConfig
 
-configParser = do terms <- parseList "terms"
-                  types <- parseList "types"
-                  tests <- parseList "tests"
-                  options <- parseList "options"
-                  return $ Config (Terms terms) (Types types)
-                             (Tests tests) (Options options)
-    
 parseConfig :: String -> ThrowsError Config
 parseConfig str =
-    case runParser configParser 0 "config parser" str of
+    case runParser config 0 "config parser" str of
       Left err -> throwError $ ParserError $ show err
       Right c  -> return c
-         

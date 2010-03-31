@@ -1,19 +1,30 @@
 module GenMakefile (genMakefile) where
 
 import Control.Monad.Error
-
+import System.FilePath ((</>), splitPath, joinPath)
+    
 import Util
 import TaplError
 import Config
         
 genMakefile :: Config -> IOThrowsError ()
-genMakefile c =
-    lift $ writeToFile "Makefile" $
-    begin ++
-    baseFiles ++
-    (if (useIsorec c) then isorecFiles else "") ++
-    (if (useEquirec c) then equirecFiles else "") ++
-    end
+genMakefile c@(CopyConfig files) = create [] files
+genMakefile c@(GenConfig _ _ _ _) =
+    create baseGenerated $ baseCommon ++
+               (if (useIsorec c) then isorecFiles else []) ++
+               (if (useEquirec c) then equirecFiles else [])
+
+create :: [String] -> [String] -> IOThrowsError ()
+create generated toCopy = copyFiles allToCopy >>
+                          lift (writeToFile "Makefile" contents)
+    where allToCopy = baseToCopy ++ toCopy
+          contents = begin ++
+                     "FILES = " ++
+                     toList (map removePath (generated ++ allToCopy)) ++
+                     end
+          removePath = last . splitPath
+          toList = foldr1 (\x y -> x ++ " " ++ y)
+          copyFiles = mapM (lift . copyToGen)
 
 begin = "#   make         to rebuild the executable file f\n\
 \#   make test    to rebuild the executable and run the unit tests\n\
@@ -22,14 +33,31 @@ begin = "#   make         to rebuild the executable file f\n\
 \#   make clean   to remove all intermediate and temporary files\n\
 \\n"
 
-baseFiles = "FILES =  Typing.hs Syntax.hs Printing.hs Parser.hs Evaluator.hs ../../common/TaplError.hs ../../common/Util.hs ../../common/TestUtils.hs ../../common/ArithTests.hs ../../common/FullSimpleTests.hs ../../common/SimpleContext.hs"
+-- the generated files Main.hs and Tests.hs are separately listed
+-- in their respective targets of "f" and "test-runner"
+baseGenerated = ["Typing.hs"
+                ,"Syntax.hs"
+                ,"Printing.hs"
+                ,"Parser.hs"
+                ,"Evaluator.hs"
+                ]
 
-isorecFiles = " ../../common/IsorecTests.hs"
-equirecFiles = " ../../common/EquirecTests.hs"
+baseToCopy = ["README"
+             ,"test.f"
+             ,"test.out"
+             ]
+
+baseCommon = ["../../common/TaplError.hs"
+             ,"../../common/Util.hs"
+             ,"../../common/TestUtils.hs"
+             ,"../../common/ArithTests.hs"
+             ,"../../common/FullSimpleTests.hs"
+             ,"../../common/SimpleContext.hs"]
+
+isorecFiles = ["../../common/IsorecTests.hs"]
+equirecFiles = [" ../../common/EquirecTests.hs"]
 
 end = "\n\
-\\n\
-\INCLUDE = -i../../common -i./nontyping\n\
 \\n\
 \f: $(FILES) Main.hs\n\
 \\tghc $(INCLUDE) -fglasgow-exts --make Main.hs -o f\n\
@@ -46,4 +74,3 @@ end = "\n\
 \clean:\n\
 \\t-rm *.hi *.o f test-runner \n\
 \\n"
-    

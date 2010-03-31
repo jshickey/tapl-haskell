@@ -15,18 +15,22 @@ import GenSyntax
 import GenTyping
 import GenTests
 import GenMakefile
+
+generate :: Config -> IOThrowsError ()
+generate c@(CopyConfig _) = genMakefile c
+generate c@(GenConfig _ _ _ _) = genEvaluator c >>
+                                 genMain c >>
+                                 genParser c >>
+                                 genPrinting c >>
+                                 genSyntax c >>
+                                 genTyping c >>
+                                 genTests c >> 
+                                 genMakefile c
     
 parseAndGen :: String -> IOThrowsError ()
-parseAndGen str = do config <- liftThrows $ parseConfig str
-                     genEvaluator config
-                     genMain config
-                     genParser config
-                     genPrinting config
-                     genSyntax config
-                     genTyping config
-                     genTests config
-                     genMakefile config
-                     lift $ putStrLn "Successfully generated files."
+parseAndGen str = liftThrows (parseConfig str) >>=
+                  generate >>
+                  lift (putStrLn "Successfully generated files.")
     
 main :: IO ()
 main = do str <- getContentsFromCmdLine

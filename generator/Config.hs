@@ -1,8 +1,9 @@
 module Config where
 
 import System.IO
-import System.FilePath ((</>))
-import System.Directory (doesDirectoryExist, createDirectory)
+import System.FilePath ((</>), splitPath, joinPath)
+import System.Directory (doesDirectoryExist, createDirectory,
+                         getCurrentDirectory, copyFile)
 import Control.Monad.Error
 import TaplError
     
@@ -14,16 +15,17 @@ newtype Tests = Tests [String]
 
 newtype Options = Options [String]
     
-data Config = Config {terms::Terms,
-                      types::Types,
-                      tests::Tests,
-                      options::Options}
+data Config = CopyConfig { files::[String] }
+            | GenConfig { terms::Terms
+                        , types::Types
+                        , tests::Tests
+                        , options::Options}
 
 useType :: String -> Config -> Bool
-useType t (Config _ (Types ts) _ _) = t `elem` ts
+useType t (GenConfig _ (Types ts) _ _) = t `elem` ts
 
 hasOption :: String -> Config -> Bool
-hasOption t (Config _ _ _ (Options ts)) = t `elem` ts
+hasOption t (GenConfig _ _ _ (Options ts)) = t `elem` ts
 
 hasSubtypes = hasOption "subtypes"
 useIsorec = useType "isorec"
@@ -35,7 +37,14 @@ liftThrows :: ThrowsError a -> IOThrowsError a
 liftThrows (Left err) = throwError err
 liftThrows (Right val) = return val
 
-path = "gen"
+genDest :: FilePath -> IO FilePath
+genDest f = do d <- getCurrentDirectory
+               let ds = splitPath d
+               let baseGenPath = (joinPath (init ds)) </> "gen"
+               createPath baseGenPath
+               let output = baseGenPath </> (last ds)
+               createPath output
+               return $ output </> f
 
 createPath :: FilePath -> IO ()
 createPath path = do exists <- doesDirectoryExist path
@@ -43,7 +52,10 @@ createPath path = do exists <- doesDirectoryExist path
                        then return ()
                        else createDirectory path
                          
-writeToFile :: String -> String -> IO ()
-writeToFile filename contents =
-    do createPath path
-       writeFile (path </> filename) contents
+writeToFile :: FilePath -> String -> IO ()
+writeToFile filename contents = do dest <- genDest filename
+                                   writeFile dest contents
+
+copyToGen :: FilePath -> IO ()
+copyToGen filename = do dest <- genDest filename
+                        copyFile filename dest
