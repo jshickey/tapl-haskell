@@ -1,0 +1,4 @@
+name = untyped
+files = Tests.hs, Main.hs, Untyped.hs, UntypedParser.hs, Evaluator.hs, Context.hs, ../common/TaplError.hs, ../common/Util.hs, ../common/TestUtils.hs, ../common/UntypedTests.hs
+
+notes = There is an additional construct not mentioned in book chapters, a binder, which binds a free variable into the context.  Forexample, "x/;" binds "x" so that it can be referred to as (an otherwise free variable) in a later statement.

@@ -1,0 +1,2 @@
+name = arith
+files = Tests.hs, Main.hs, Arith.hs, ArithParser.hs, Evaluator.hs, ../common/TaplError.hs, ../common/Util.hs, ../common/ArithTests.hs, ../common/TestUtils.hs
