@@ -1,10 +1,1 @@
-Haskell port of the arith OCaml implementation of TAPL.  
-
-Sample usage:
-
-> make test
-
-> make
-> ./f test.f
-
-See the Makefile for all targets.
+This project is "generated" by copying most of the files in this directory.  The only files not copied are this one and the Makefile.  Different versions are both are created for the generated code, based on the .gen file.

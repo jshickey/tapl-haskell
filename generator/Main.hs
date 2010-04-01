@@ -15,17 +15,19 @@ import GenSyntax
 import GenTyping
 import GenTests
 import GenMakefile
+import GenReadme
 
 generate :: Config -> IOThrowsError ()
-generate c@(CopyConfig _) = genMakefile c
-generate c@(GenConfig _ _ _ _) = genEvaluator c >>
-                                 genMain c >>
-                                 genParser c >>
-                                 genPrinting c >>
-                                 genSyntax c >>
-                                 genTyping c >>
-                                 genTests c >> 
-                                 genMakefile c
+generate c@(CopyConfig _ _) = genMakefile c
+generate c@(GenConfig _ _ _ _ _) = genEvaluator c >>
+                                   genMain c >>
+                                   genParser c >>
+                                   genPrinting c >>
+                                   genSyntax c >>
+                                   genTyping c >>
+                                   genTests c >> 
+                                   genMakefile c >>
+                                   genReadme c
     
 parseAndGen :: String -> IOThrowsError ()
 parseAndGen str = liftThrows (parseConfig str) >>=

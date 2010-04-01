@@ -43,17 +43,20 @@ symbol        = P.symbol        lexer
 whiteSpace    = P.whiteSpace    lexer
 comma         = P.comma         lexer
 
-parseList label = reserved label >>
-                  symbol "=" >>
+parseList label = reserved label >> symbol "=" >>
                   (spaces >> identifier) `sepBy` comma
+
+parseValue label = reserved label >> symbol "=" >>
+                   (spaces >> identifier)
+                                         
+copyConfig = liftM2 CopyConfig (parseValue "name") (parseList "files")
                              
-copyConfig = liftM CopyConfig (parseList "files")
-                             
-genConfig = do terms <- parseList "terms"
+genConfig = do name <- parseValue "name"
+               terms <- parseList "terms"
                types <- parseList "types"
                tests <- parseList "tests"
                options <- parseList "options"
-               return $ GenConfig (Terms terms) (Types types)
+               return $ GenConfig name (Terms terms) (Types types)
                           (Tests tests) (Options options)
 config = (try copyConfig) <|> genConfig
 

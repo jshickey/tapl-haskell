@@ -1,22 +1,2 @@
-Haskell port of the untyped (lambda calculus) OCaml implementation of TAPL described in chapters 5-7.  
+This project is "generated" by copying most of the files in this directory.  The only files not copied are this one and the Makefile.  Different versions are both are created for the generated code, based on the .gen file.
 
-LANGUAGE:
-
-Untyped lambda calculus consists of three constructs:
-
-* Variables (e.g., "x").  
-
-* Abstractions (e.g., "lambda x. x x" takes a function and applies it to itself)
-
-* Applicatoins (e.g., "(lambda x. x) y" applies "y" to an identity function)
-
-There is an additional construct not mentioned in book chapters, a binder, which binds a free variable into the context.  Forexample, "x/;" binds "x" so that it can be referred to as (an otherwise free variable) in a later statement.
-
-SAMPLE USAGE:
-
-> make test
-
-> make
-> ./f test.f
-
-See the Makefile for all targets.

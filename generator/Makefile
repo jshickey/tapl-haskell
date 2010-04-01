@@ -1,4 +1,4 @@
-FILES = ../common/Util.hs ../common/TestUtils.hs ../common/TaplError.hs Config.hs ConfigParser.hs GenEvaluator.hs GenMain.hs GenParser.hs GenPrinting.hs GenSyntax.hs GenTests.hs GenTyping.hs GenMakefile.hs Tests.hs
+FILES = ../common/Util.hs ../common/TestUtils.hs ../common/TaplError.hs Config.hs ConfigParser.hs GenEvaluator.hs GenMain.hs GenParser.hs GenPrinting.hs GenSyntax.hs GenTests.hs GenTyping.hs GenMakefile.hs GenReadme.hs Tests.hs
 
 INCLUDE = -i../common
 

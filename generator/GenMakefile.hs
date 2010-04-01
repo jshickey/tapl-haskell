@@ -9,8 +9,8 @@ import TaplError
 import Config
         
 genMakefile :: Config -> IOThrowsError ()
-genMakefile c@(CopyConfig files) = create [] files
-genMakefile c@(GenConfig _ _ _ _) =
+genMakefile c@(CopyConfig _ files) = create [] files
+genMakefile c@(GenConfig _ _ _ _ _) =
     create baseGenerated $ baseCommon ++
                (if (useIsorec c) then isorecFiles else []) ++
                (if (useEquirec c) then equirecFiles else [])
@@ -35,13 +35,13 @@ begin = "#   make         to rebuild the executable file f\n\
 \#   make clean   to remove all intermediate and temporary files\n\
 \\n"
 
--- the generated files Main.hs and Tests.hs are separately listed
--- in their respective targets of "f" and "test-runner"
 baseGenerated = ["Typing.hs"
                 ,"Syntax.hs"
                 ,"Printing.hs"
                 ,"Parser.hs"
                 ,"Evaluator.hs"
+                ,"Main.hs"
+                ,"Tests.hs"
                 ]
 
 baseToCopy = ["README"
@@ -61,10 +61,10 @@ equirecFiles = [" ../../common/EquirecTests.hs"]
 
 end = "\n\
 \\n\
-\f: $(FILES) Main.hs\n\
+\f: $(FILES) \n\
 \\tghc $(INCLUDE) -fglasgow-exts --make Main.hs -o f\n\
 \\n\
-\test-runner: $(FILES) Tests.hs\n\
+\test-runner: $(FILES) \n\
 \\tghc $(INCLUDE) -fglasgow-exts --make Tests.hs -o test-runner\n\
 \\n\
 \test: test-runner\n\
@@ -76,3 +76,4 @@ end = "\n\
 \clean:\n\
 \\t-rm *.hi *.o f test-runner \n\
 \\n"
+

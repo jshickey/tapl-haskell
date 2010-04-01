@@ -15,17 +15,19 @@ newtype Tests = Tests [String]
 
 newtype Options = Options [String]
     
-data Config = CopyConfig { files::[String] }
-            | GenConfig { terms::Terms
+data Config = CopyConfig { name::String
+                         , files::[String] }
+            | GenConfig { name::String
+                        , terms::Terms
                         , types::Types
                         , tests::Tests
                         , options::Options}
 
 useType :: String -> Config -> Bool
-useType t (GenConfig _ (Types ts) _ _) = t `elem` ts
+useType t (GenConfig _ _ (Types ts) _ _) = t `elem` ts
 
 hasOption :: String -> Config -> Bool
-hasOption t (GenConfig _ _ _ (Options ts)) = t `elem` ts
+hasOption t (GenConfig _ _ _ _ (Options ts)) = t `elem` ts
 
 hasSubtypes = hasOption "subtypes"
 useIsorec = useType "isorec"

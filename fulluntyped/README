@@ -1,3 +1,5 @@
+This project is "generated" my copying the files in this directory (other than this one), and adding a Makefile and README based on the .gen file.
+
 Haskell port of the fulluntyped (lambda calculus) OCaml implementation of TAPL described in chapters 5-7.  
 
 LANGUAGE:
