@@ -8,7 +8,8 @@ import Config
 
 genReadme :: Config -> IOThrowsError ()
 genReadme c = lift $ writeToFile "README" $
-              (beginReadme (name c)) ++ endReadme
+              (beginReadme (name c)) ++ endReadme ++
+              if ((notes c) == "") then "" else ("\n\nNOTES:\n\n" ++ (notes c))
 
 beginReadme name = "Haskell port of the " ++ name ++
                    " OCaml implementation of TAPL.\n"

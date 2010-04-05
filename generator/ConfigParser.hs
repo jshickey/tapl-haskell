@@ -20,6 +20,8 @@ import TaplError
    ------------------------------ -}
 fileChar = letter <|> digit <|> oneOf ".-_/\\"
 
+tripleQuotes = "\"\"\""
+           
 configDef = LanguageDef
                 { commentStart    = "/*"
                 , commentEnd      = "*/"
@@ -31,8 +33,8 @@ configDef = LanguageDef
                 , opLetter        = fail "no operators"
                 , reservedOpNames = []
                 , caseSensitive   = True
-                , reservedNames   = ["files", "terms", "types"
-                                    , "tests", "options"]
+                , reservedNames   = ["files", "name", "notes", "terms", "types"
+                                    , "tests", "options", tripleQuotes]
                 }
 
 lexer = P.makeTokenParser configDef
@@ -48,16 +50,22 @@ parseList label = reserved label >> symbol "=" >>
 
 parseValue label = reserved label >> symbol "=" >>
                    (spaces >> identifier)
-                                         
-copyConfig = liftM2 CopyConfig (parseValue "name") (parseList "files")
+
+-- the contents are inside triple-quotes (i.e., Python-style)
+parseNotes = reserved "notes" >> symbol "=" >>
+             reserved tripleQuotes >>
+             manyTill anyToken (reserved tripleQuotes)
+
+copyConfig = liftM3 CopyConfig (parseValue "name") (parseList "files") parseNotes
                              
 genConfig = do name <- parseValue "name"
                terms <- parseList "terms"
                types <- parseList "types"
                tests <- parseList "tests"
                options <- parseList "options"
+               notes <- parseNotes
                return $ GenConfig name (Terms terms) (Types types)
-                          (Tests tests) (Options options)
+                          (Tests tests) (Options options) notes
 config = (try copyConfig) <|> genConfig
 
 parseConfig :: String -> ThrowsError Config

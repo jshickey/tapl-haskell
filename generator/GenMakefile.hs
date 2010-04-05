@@ -9,8 +9,8 @@ import TaplError
 import Config
         
 genMakefile :: Config -> IOThrowsError ()
-genMakefile c@(CopyConfig _ files) = create [] files
-genMakefile c@(GenConfig _ _ _ _ _) =
+genMakefile c@(CopyConfig _ files _) = create [] files
+genMakefile c@(GenConfig _ _ _ _ _ _) =
     create baseGenerated $ baseCommon ++
                (if (useIsorec c) then isorecFiles else []) ++
                (if (useEquirec c) then equirecFiles else [])

@@ -18,8 +18,8 @@ import GenMakefile
 import GenReadme
 
 generate :: Config -> IOThrowsError ()
-generate c@(CopyConfig _ _) = genMakefile c
-generate c@(GenConfig _ _ _ _ _) = genEvaluator c >>
+generate c@(CopyConfig _ _ _) = genMakefile c
+generate c@(GenConfig _ _ _ _ _ _) = genEvaluator c >>
                                    genMain c >>
                                    genParser c >>
                                    genPrinting c >>
