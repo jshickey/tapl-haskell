@@ -22,6 +22,15 @@ all-make: run-make-all
 all-clean: run-make-all
 	./run-make-all --command=clean --dir=../
 
+gen-all-test: run-make-all
+	./run-make-all --command=test --dir=../gen/
+
+gen-all-make: run-make-all
+	./run-make-all --command=make --dir=../gen/
+
+gen-all-clean: run-make-all
+	./run-make-all --command=clean --dir=../gen/
+
 run-make-all: RunMakeAll.hs
 	ghc --make RunMakeAll.hs -o run-make-all
 

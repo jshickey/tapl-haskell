@@ -53,7 +53,7 @@ execInDirs cmd dir
          subDirs <- filterM doesDirectoryExist dirContents
          let validSubDirs = filter (valid . snd . splitFileName) subDirs
          execute validSubDirs cmd
-    where valid dir = (head dir) /= '.' &&
+    where valid dir = (head dir) /= '.' && (dir /= "gen") &&
                       (not (dir `elem` inProgress))
 
 execute [] cmd = putStrLn "\nAll make commands completed successfully." >>
