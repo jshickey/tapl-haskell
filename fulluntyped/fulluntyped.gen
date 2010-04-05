@@ -1,0 +1,35 @@
+name = fulluntyped
+files = Tests.hs, Main.hs, FullUntyped.hs, FullUntypedParser.hs, Evaluator.hs, Context.hs, ../common/TaplError.hs, ../common/Util.hs, ../common/UntypedTests.hs, ../common/ArithTests.hs, ../common/TestUtils.hs
+
+notes = """
+The basic untyped lambda calculus described in the book consists of three constructs:
+
+* Variables (e.g., "x").  
+
+* Abstractions (e.g., "lambda x. x x" takes a function and applies it to itself)
+
+* Applications (e.g., "(lambda x. x) y" applies "y" to an identity function)
+
+The fulluntyped implemenation has the following additional constructs:
+
+* Binders: 
+  - To just declare a variable, use a slash (e.g., "x/;").  This binds a free variable into the context so that it can be referred to as (an otherwise free variable) in a later statement.
+  - To both declare and define a variable, use an assignment (e.g., "x = 3;")
+
+* Records & Projections: Records are comma-delimited terms (possibly bound to a variable) surrounded by curly braces.  Records are accessed by projections, which access a field in the record by either the name of bound variable, or by the index (starting at 1) if the field of the record was not named. For example:
+  - "{x=lambda x.x, y=lambda z.z}.x;" yields "(lambda x. x)"
+  - "{lambda x.x, lambda z.z}.1;" yields "(lambda x. x)"
+  - "{lambda x.x, lambda z.z}.2;" yields "(lambda z. z)"  
+
+* Floats (e.g., "4.3")
+
+* Multiplication of floats (e.g., "timesfloat 1.1 1.2" -> "1.32")
+
+* Strings (e.g., "\"str\"")
+
+* Let, for example:
+ - "let x = 1.1 in x;" -> 1.1
+ - "let x = 1.1 in let y = 1.2 in (timesfloat x y);" -> 1.32
+
+test.out contains the output of running the OCaml implementation of test.f (which originated in that implementation).  However, I made a couple formatting changes (which do affect the semantics), due to minor formatting differences in the Haskell implementation.
+"""
