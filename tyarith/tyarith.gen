@@ -1,0 +1,3 @@
+name = tyarith
+files = Tests.hs, Main.hs, Typing.hs, ../arith/Arith.hs, ../arith/ArithParser.hs, ../arith/Evaluator.hs, ../common/TaplError.hs, ../common/Util.hs, ../common/TestUtils.hs, ../common/ArithTests.hs
+notes = """ This implementation reuses much of the arith implementation, and simply prints the type at the end of the evaluation. """

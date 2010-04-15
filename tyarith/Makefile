@@ -1,24 +1,35 @@
-#   make         to rebuild the executable file f
+#   make gen     to recreate the generated files (all others depend on this)
+#
+#   make f       to rebuild the executable file f
 #   make test    to rebuild the executable and run the unit tests
 #   make sample  to rebuild the executable and run it on input file test.f
 #                (this is "make test" in the ocaml implementation)
-#   make clean   to remove all intermediate and temporary files
+#   make clean   to remove the entire generated directory
 
-FILES = Typing.hs ../arith/Arith.hs ../arith/ArithParser.hs ../arith/Evaluator.hs ../common/TaplError.hs ../common/Util.hs ../common/TestUtils.hs
+NAME = tyarith
 
-INCLUDE = -i../arith -i../common
+GEN_FILE = $(NAME).gen
+GEN_DIR = ../gen/$(NAME)
 
-f: $(FILES) Main.hs
-	ghc $(INCLUDE) --make Main.hs -o f
+MAKE_IN_GEN = make --directory=$(GEN_DIR)
 
-test-runner: $(FILES) Tests.hs
-	ghc $(INCLUDE) --make Tests.hs -o test-runner
+f: gen
+	$(MAKE_IN_GEN) f
 
-test: test-runner
-	./test-runner
+test-runner: gen
+	$(MAKE_IN_GEN) test-runner
 
-sample: f
-	./f test.f
+test: gen
+	$(MAKE_IN_GEN) test
+
+sample: gen f
+	$(GEN_DIR)/f test.f
+
+gen: force
+	make --directory=../generator && ../generator/generate $(GEN_FILE)
+
+force:
+	true
 
 clean:
-	-rm *.hi *.o f test-runner
+	-rm $(GEN_DIR)/*.*; rm $(GEN_DIR)/*; rmdir $(GEN_DIR)
