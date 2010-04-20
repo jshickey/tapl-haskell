@@ -1,0 +1,18 @@
+name = simplebool
+files = Tests.hs, Main.hs, SimpleBool.hs, Parser.hs, Evaluator.hs, Context.hs, ../common/TaplError.hs, ../common/Util.hs, ../common/TestUtils.hs, ../common/UntypedTests.hs
+notes = """ Simplebool is an extension of lambda calculus to contain "true", "false", and "if" statements.  It contains the following six constructs:
+
+* Variables (e.g., "x").  
+
+* Abstractions (e.g., "lambda x : Bool. x" is an identity function for booleans).  The variable of an abstraction must be explicitly typed.
+
+* Applicatoins (e.g., "(lambda x. x) y" applies "y" to an identity function)
+
+* true
+
+* false
+
+* if-statements (e.g., "if true then false else true" yields "true : Bool")
+
+There is an additional construct not mentioned in book chapters, a binder, which binds a free variable into the context.  Forexample, "x : Bool;" binds "x" so that it can be referred to as (an otherwise free variable) in a later statement.  A binder must specify the type of the variable.
+"""
