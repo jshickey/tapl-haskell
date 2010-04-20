@@ -1,4 +1,6 @@
+name=fullsub
 terms=
 types=
 tests=
 options= subtypes
+notes=""" """

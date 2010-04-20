@@ -6,9 +6,12 @@
 #                (this is "make test" in the ocaml implementation)
 #   make clean   to remove the entire generated directory
 
-GEN_FILE = fullsub.gen
+NAME = fullsub
 
-MAKE_IN_GEN = make --directory=gen
+GEN_FILE = $(NAME).gen
+GEN_DIR = ../gen/$(NAME)
+
+MAKE_IN_GEN = make --directory=$(GEN_DIR)
 
 f: gen
 	$(MAKE_IN_GEN) f
@@ -20,7 +23,7 @@ test: gen
 	$(MAKE_IN_GEN) test
 
 sample: gen f
-	./gen/f test.f
+	$(GEN_DIR)/f test.f
 
 gen: force
 	make --directory=../generator && ../generator/generate $(GEN_FILE)
@@ -29,4 +32,4 @@ force:
 	true
 
 clean:
-	-rm gen/*.*; rm gen/*; rmdir gen
+	-rm $(GEN_DIR)/*.*; rm $(GEN_DIR)/*; rmdir $(GEN_DIR)

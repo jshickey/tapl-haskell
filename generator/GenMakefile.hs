@@ -13,7 +13,8 @@ genMakefile c@(CopyConfig _ files _) = create [] files
 genMakefile c@(GenConfig _ _ _ _ _ _) =
     create baseGenerated $ baseCommon ++
                (if (useIsorec c) then isorecFiles else []) ++
-               (if (useEquirec c) then equirecFiles else [])
+               (if (useEquirec c) then equirecFiles else []) ++
+               (if (hasSubtypes c) then subtypeFiles else [])
 
 create :: [String] -> [String] -> IOThrowsError ()
 create generated toCopy = copyFiles allToCopy >>
@@ -57,7 +58,8 @@ baseCommon = ["../common/TaplError.hs"
              ,"../common/SimpleContext.hs"]
 
 isorecFiles = ["../common/IsorecTests.hs"]
-equirecFiles = [" ../common/EquirecTests.hs"]
+equirecFiles = ["../common/EquirecTests.hs"]
+subtypeFiles = ["../common/SubtypeTests.hs"]
 
 end = "\n\
 \\n\

@@ -1,16 +1,3 @@
 Haskell port of the fullsub OCaml implementation of TAPL, which is described in Chapter 15.  It adds subtyping to fullsimple.
 
 It makes use of code generation-- see ../generator/README.
-
-SAMPLE USAGE:
-
-> make test
-
-> make
-> gen/f test.f
-
-See the Makefile for all targets.
-
-NOTES:
-
-Formatting changes have been made to test.out, which was originally constructed as the output of calling the OCaml implementation on test.f.
