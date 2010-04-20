@@ -1,0 +1,3 @@
+name = fullref
+files = Tests.hs, Main.hs, Syntax.hs, Printing.hs, Store.hs, Typing.hs, Parser.hs, Evaluator.hs, ../common/TaplError.hs, ../common/Util.hs, ../common/TestUtils.hs, ../common/ArithTests.hs, ../common/FullSimpleTests.hs, ../common/SimpleContext.hs,  ../common/SubtypeTests.hs
+notes = """ """
