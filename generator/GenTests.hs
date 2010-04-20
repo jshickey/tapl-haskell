@@ -38,7 +38,7 @@ isorec_imports  = "import qualified IsorecTests  as IT\n"
 equirec_imports = "import qualified EquirecTests as ET\n"
 
 begin_tests = "\n\
-\getAllTests = do testDotFTest <- getTestDotFTestWithPath parseAndEval \"..\"\n\
+\getAllTests = do testDotFTest <- getTestDotFTest parseAndEval\n\
 \                 return $ TestList $ concat\n"
                                                
 simple_tests  = "                        [ map (makeParseTest parseFullSimple) F.parseTests\n\

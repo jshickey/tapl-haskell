@@ -49,15 +49,15 @@ baseToCopy = ["README"
              ,"test.out"
              ]
 
-baseCommon = ["../../common/TaplError.hs"
-             ,"../../common/Util.hs"
-             ,"../../common/TestUtils.hs"
-             ,"../../common/ArithTests.hs"
-             ,"../../common/FullSimpleTests.hs"
-             ,"../../common/SimpleContext.hs"]
+baseCommon = ["../common/TaplError.hs"
+             ,"../common/Util.hs"
+             ,"../common/TestUtils.hs"
+             ,"../common/ArithTests.hs"
+             ,"../common/FullSimpleTests.hs"
+             ,"../common/SimpleContext.hs"]
 
-isorecFiles = ["../../common/IsorecTests.hs"]
-equirecFiles = [" ../../common/EquirecTests.hs"]
+isorecFiles = ["../common/IsorecTests.hs"]
+equirecFiles = [" ../common/EquirecTests.hs"]
 
 end = "\n\
 \\n\

@@ -1,16 +1,3 @@
 Haskell port of the fullsimple OCaml implementation of TAPL, which is introduced in Chapter 9, and fully described in Chapter 11.
 
 It makes use of code generation-- see ../generator/README.
-
-SAMPLE USAGE:
-
-> make test
-
-> make
-> ./f test.f
-
-See the Makefile for all targets.
-
-NOTES:
-
-Formatting changes have been made to test.out, which was originally constructed as the output of calling the OCaml implementation on test.f.
