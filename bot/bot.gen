@@ -1,0 +1,3 @@
+name = bot
+files = Tests.hs, Main.hs, Typing.hs, Syntax.hs, Printing.hs, Parser.hs, Evaluator.hs, ../common/TaplError.hs, ../common/Util.hs, ../common/TestUtils.hs, ../common/SimpleContext.hs, ../common/SubtypeTests.hs, ../common/ArithTests.hs
+notes = """ """
